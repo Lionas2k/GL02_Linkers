@@ -1,6 +1,6 @@
 var Command = {
     check: function() {
-        console.log("Command ready!");
+        console.log("Command ready !");
         return true;
     }
 }

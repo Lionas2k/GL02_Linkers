@@ -1,4 +1,4 @@
-var colors = require("colors");
+//var colors = require("colors");
 var unsafeRequire = require("./utils/unsafeRequire");
 
 // Pour rendre node un peu plus souple pour l'exercice (ne jamais utiliser ailleurs)
@@ -22,10 +22,10 @@ var stub = {
 	}
 };
 
-var engine = unsafeRequire("./engine", stub);
-var command = unsafeRequire("./command", stub);
-var radio = unsafeRequire("./radio", stub);
-var satellite = unsafeRequire("./satellite", stub);
+var engine = unsafeRequire("../engine", stub);
+var command = unsafeRequire("../command", stub);
+var radio = unsafeRequire("../radio", stub);
+var satellite = unsafeRequire("../satellite", stub);
 
 
 
@@ -44,7 +44,7 @@ var checklist = {
 };
 
 var takeOff = function(){
-	var counter = 5;
+	var counter = 4;
 	for(var part in rocket){
 		console.log(counter + "..");
 		checklist[part] = rocket[part].check();
@@ -52,19 +52,19 @@ var takeOff = function(){
 		// S'il manque le moteur ou les commandes Crash
 		if(!checklist[part] && (part === "engine" || part === "command")){
 			var crashMsg = "Crash ! "+part+" is missing !!";
-			console.log(crashMsg.red);
+			console.log(crashMsg);
 			break;
 		// S'il manque un composant optionnel
 		}else if(!checklist[part]){
 			var alertMsg = "Woops ! "+ part+ " is missing. Do we really need it?";
-			console.log(alertMsg.yellow);
+			console.log(alertMsg);
 		}
 		counter--;
 	}
 	
 	// Décollage
 	if(counter === 0){
-		console.log("0.. Fire \nTaaaaakkke Oooooofffff".green);
+		console.log("0.. Fire \nTaaaaakkke Oooooofffff");
 	}
 }
 
