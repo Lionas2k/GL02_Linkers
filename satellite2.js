@@ -1,6 +1,6 @@
 var Satellite = {
   check: function () {
-    console.log("Satellite Ready !");
+    console.log("Satellite2 Ready !");
     return true;
   }
 };
