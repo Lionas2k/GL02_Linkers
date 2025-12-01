@@ -1,0 +1,30 @@
+{
+  "name": "gl02_linkers",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexiszott/GL02_Linkers.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/alexiszott/GL02_Linkers/issues"
+  },
+  "homepage": "https://github.com/alexiszott/GL02_Linkers#readme",
+  "dependencies": {
+    "@caporal/core": "^2.0.7"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0"
+  }
+}
