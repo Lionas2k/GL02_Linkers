@@ -79,7 +79,6 @@ GIFTParser.prototype.check = function (s, input) {
 // expect : expect the next symbol to be s.
 GIFTParser.prototype.expect = function (s, input) {
   if (s == this.next(input)) {
-    //console.log("Reckognized! "+s)
     return true;
   } else {
     this.errMsg("symbol " + s + " doesn't match", input);
@@ -101,33 +100,37 @@ GIFTParser.prototype.listQuestions = function (input) {
 
 // question = title "::" question-title "::" question-text CRLF [answerset / metadata / subquestion *subquestion] *CRLF
 GIFTParser.prototype.question = function (input) {
-  // 1. :: title ::
-  //const title = this.title(input);
-  //this.expect("::", input);
-
   // 2. :: question-title ::
   this.expect("::", input);
-  const questionTitle = this.questionTitle(input);
+  const questionId = this.questionId(input);
   this.expect("::", input);
 
   // 3. question-text / enonce
-  const questionText = this.questionText(input);
+  let questionText = this.enonce(input);
+
+  if (this.check("\n", input) || this.check("\r", input)) {
+    return false;
+  }
 
   // 4. Bloc réponses
   this.expect("{", input);
-  let { reponses, bonneReponses, type } = this.answerset(input);
+  let { reponses, bonneReponses } = this.answerset(input);
 
   // 5. Metadata
   let meta = this.metadata(input);
 
-  // 6. Sous-questions
-  let subs = this.subquestions(input);
-
   this.expect("}", input);
+
+  let suiteQuestion = this.enonce(input);
+  if (suiteQuestion.length > 0) {
+    questionText += " ___ " + suiteQuestion;
+  }
+
+  let type = this.type(bonneReponses);
 
   // 7. Construire l’objet Question
   const q = new Question(
-    questionTitle,
+    questionId,
     questionText,
     type || "MC",
     reponses,
@@ -135,51 +138,60 @@ GIFTParser.prototype.question = function (input) {
   );
 
   q.metadata = meta;
-  q.subquestions = subs;
   this.parsedQuestions.push(q);
 
   return true;
 };
 
-GIFTParser.prototype.title = function (input) {
-  return this.next(input);
-};
-
 GIFTParser.prototype.answerset = function (input) {
   var reponses = [];
   var bonneReponses = [];
-  var typeQuestion = null;
-
-  const prefixRegex = /^(\d+):(MC|SA|TF|NUM|MATCH|ESSAY|DESC):/;
 
   while (input.length > 0 && input[0] !== "}") {
     var sym = input[0];
-    this.next(input);
-    var answerText = this.next(input);
-
-    const prefixMatch = answerText.match(prefixRegex);
-
-    if (prefixMatch) {
-      typeQuestion = prefixMatch[2];
-      answerText = answerText.replace(prefixRegex, "").trim();
+    if (
+      sym.startsWith("TRUE") ||
+      sym.startsWith("T#") ||
+      sym === "T" ||
+      sym.startsWith("FALSE") ||
+      sym.startsWith("F#") ||
+      sym === "F"
+    ) {
+      this.next(input);
+      bonneReponses.push("TRUE");
+      continue;
     }
 
-    switch (sym) {
-      case "~":
+    if (sym.startsWith("FALSE") || sym.startsWith("F#") || sym === "F") {
+      this.next(input);
+      bonneReponses.push("FALSE");
+      continue;
+    }
+    if (sym === "=" || sym === "~") {
+      this.next(input);
+      var answerText = this.next(input);
+
+      if (!answerText || answerText === "}") {
+        continue;
+      }
+
+      answerText = answerText.split("#")[0].trim();
+
+      if (sym === "~") {
         reponses.push(answerText);
-        break;
-      case "=":
+      } else if (sym === "=") {
         reponses.push(answerText);
-        bonneReponses.push(reponses.length);
-        break;
-      default:
-        break;
+        bonneReponses.push(answerText);
+      }
+    } else {
+      // Token inattendu, on le consomme et continue
+      this.next(input);
     }
   }
   return { reponses, bonneReponses };
 };
 
-GIFTParser.prototype.questionText = function (input) {
+GIFTParser.prototype.enonce = function (input) {
   let result = [];
 
   while (
@@ -195,20 +207,7 @@ GIFTParser.prototype.questionText = function (input) {
   return result.join(" ");
 };
 
-GIFTParser.prototype.subquestions = function (input) {
-  let subs = [];
-  while (this.check("::", input)) {
-    this.expect("::", input);
-    let id = this.questionTitle(input);
-    this.expect("::", input);
-    let text = this.questionText(input);
-    let answers = this.answerset(input);
-    subs.push({ id, text, answers });
-  }
-  return subs;
-};
-
-GIFTParser.prototype.questionTitle = function (input) {
+GIFTParser.prototype.questionId = function (input) {
   // :: identifier ::
   //identifier = 1*(ALPHA / DIGIT / "_" / "-" / "." / " ")
   return this.next(input);
@@ -233,6 +232,21 @@ GIFTParser.prototype.metadata = function (input) {
     if (input[0] === "\n" || input[0] === "\r") this.next(input);
   }
   return meta;
+};
+
+GIFTParser.prototype.type = function (bonneReponses) {
+  if (bonneReponses.length === 0) {
+    return "TEXT";
+  }
+
+  if (
+    bonneReponses.length === 1 &&
+    (bonneReponses[0] === "TRUE" || bonneReponses[0] === "FALSE")
+  ) {
+    return "TF";
+  }
+
+  return "MC";
 };
 
 module.exports = GIFTParser;
