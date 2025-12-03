@@ -1,10 +1,10 @@
 class Question {
-  constructor() {
-    this.id = null;
-    this.enonce = "";
-    this.type = "";
-    this.reponses = [];
-    this.bonneReponses = [];
+  constructor(id, enonce, type, reponses, bonneReponses) {
+    this.id = id;
+    this.enonce = enonce;
+    this.type = type;
+    this.reponses = reponses;
+    this.bonneReponses = bonneReponses;
   }
 
   /**
