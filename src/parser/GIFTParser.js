@@ -13,6 +13,13 @@ var GIFTParser = function (sTokenize, sParsedSymb) {
 // tokenize : tranform the data input into a list
 // <eol> = CRLF
 GIFTParser.prototype.tokenize = function (data) {
+  data = data
+    .split("\n")
+    .filter((line) => !line.trim().startsWith("//"))
+    .filter((line) => !line.trim().startsWith("$CATEGORY:"))
+
+    .join("\n");
+
   var separator = /(::|\{|\}|~|=|\[|\])/g;
   data = data.split(separator);
 
@@ -27,12 +34,6 @@ GIFTParser.prototype.tokenize = function (data) {
 
 // parse : analyze data by calling the first non terminal rule of the grammar
 GIFTParser.prototype.parse = function (data) {
-  data = data
-    .split("\n")
-    .filter((line) => !line.trim().startsWith("//"))
-    .filter((line) => !line.trim().startsWith("$CATEGORY"))
-    .join("\n");
-
   var tData = this.tokenize(data);
   if (this.showTokenize) {
     console.log(tData);
@@ -98,47 +99,56 @@ GIFTParser.prototype.listQuestions = function (input) {
   }
 };
 
-// question = title "::" question-title "::" question-text CRLF [answerset / metadata / subquestion *subquestion] *CRLF
+// question = "::" question-title "::" question-text CRLF [answerset / metadata / subquestion *subquestion] *CRLF
 GIFTParser.prototype.question = function (input) {
-  // 2. :: question-title ::
   this.expect("::", input);
   const questionId = this.questionId(input);
   this.expect("::", input);
 
-  // 3. question-text / enonce
   let questionText = this.enonce(input);
 
-  if (this.check("\n", input) || this.check("\r", input)) {
-    return false;
+  const hasAnswerBlock = this.check("{", input);
+
+  if (hasAnswerBlock) {
+    this.expect("{", input);
+    let { reponses, bonneReponses, possedeMauvaideReponse } =
+      this.answerset(input);
+
+    let meta = this.metadata(input);
+
+    this.expect("}", input);
+
+    let suiteQuestion = this.enonce(input);
+    let questionImbriquee = false;
+    if (suiteQuestion.length > 0) {
+      questionText += " ___ " + suiteQuestion;
+      questionImbriquee = true;
+    }
+
+    let type = this.type(
+      bonneReponses,
+      possedeMauvaideReponse,
+      questionImbriquee
+    );
+
+    const q = new Question(
+      questionId,
+      questionText,
+      type,
+      reponses,
+      bonneReponses
+    );
+
+    q.metadata = meta;
+    this.parsedQuestions.push(q);
+  } else {
+    while (input.length > 0 && (input[0] === "\n" || input[0] === "\r")) {
+      this.next(input);
+    }
+
+    const q = new Question(questionId, questionText, "DESC", [], []);
+    this.parsedQuestions.push(q);
   }
-
-  // 4. Bloc réponses
-  this.expect("{", input);
-  let { reponses, bonneReponses } = this.answerset(input);
-
-  // 5. Metadata
-  let meta = this.metadata(input);
-
-  this.expect("}", input);
-
-  let suiteQuestion = this.enonce(input);
-  if (suiteQuestion.length > 0) {
-    questionText += " ___ " + suiteQuestion;
-  }
-
-  let type = this.type(bonneReponses);
-
-  // 7. Construire l’objet Question
-  const q = new Question(
-    questionId,
-    questionText,
-    type || "MC",
-    reponses,
-    bonneReponses
-  );
-
-  q.metadata = meta;
-  this.parsedQuestions.push(q);
 
   return true;
 };
@@ -146,17 +156,12 @@ GIFTParser.prototype.question = function (input) {
 GIFTParser.prototype.answerset = function (input) {
   var reponses = [];
   var bonneReponses = [];
+  var possedeMauvaideReponse = false;
+  var possedeAssocie = false;
 
   while (input.length > 0 && input[0] !== "}") {
     var sym = input[0];
-    if (
-      sym.startsWith("TRUE") ||
-      sym.startsWith("T#") ||
-      sym === "T" ||
-      sym.startsWith("FALSE") ||
-      sym.startsWith("F#") ||
-      sym === "F"
-    ) {
+    if (sym.startsWith("TRUE") || sym.startsWith("T#") || sym === "T") {
       this.next(input);
       bonneReponses.push("TRUE");
       continue;
@@ -170,8 +175,12 @@ GIFTParser.prototype.answerset = function (input) {
     if (sym === "=" || sym === "~") {
       this.next(input);
       var answerText = this.next(input);
-
       if (!answerText || answerText === "}") {
+        continue;
+      }
+
+      if (answerText.includes("->")) {
+        possedeAssocie = true;
         continue;
       }
 
@@ -179,16 +188,21 @@ GIFTParser.prototype.answerset = function (input) {
 
       if (sym === "~") {
         reponses.push(answerText);
+        var possedeMauvaideReponse = true;
       } else if (sym === "=") {
         reponses.push(answerText);
         bonneReponses.push(answerText);
       }
     } else {
-      // Token inattendu, on le consomme et continue
       this.next(input);
     }
   }
-  return { reponses, bonneReponses };
+  return {
+    reponses,
+    bonneReponses,
+    possedeMauvaideReponse,
+    possedeAssocie,
+  };
 };
 
 GIFTParser.prototype.enonce = function (input) {
@@ -208,8 +222,6 @@ GIFTParser.prototype.enonce = function (input) {
 };
 
 GIFTParser.prototype.questionId = function (input) {
-  // :: identifier ::
-  //identifier = 1*(ALPHA / DIGIT / "_" / "-" / "." / " ")
   return this.next(input);
 };
 
@@ -217,26 +229,28 @@ GIFTParser.prototype.metadata = function (input) {
   let meta = {};
   while (input.length > 0 && input[0] === "[") {
     this.expect("[", input);
-    let key = this.next(input); // récupère le nom
+    let key = this.next(input);
     this.expect("]", input);
     let value = [];
 
-    // collecter le reste de la ligne jusqu’au CRLF
     while (input.length > 0 && input[0] !== "\n" && input[0] !== "\r") {
       value.push(this.next(input));
     }
 
     meta[key] = value.join(" ").trim();
 
-    // consommer le CRLF
     if (input[0] === "\n" || input[0] === "\r") this.next(input);
   }
   return meta;
 };
 
-GIFTParser.prototype.type = function (bonneReponses) {
-  if (bonneReponses.length === 0) {
-    return "TEXT";
+GIFTParser.prototype.type = function (
+  bonneReponses,
+  possedeMauvaideReponse,
+  possedeAssocie
+) {
+  if (possedeAssocie) {
+    return "MATCH";
   }
 
   if (
@@ -246,7 +260,19 @@ GIFTParser.prototype.type = function (bonneReponses) {
     return "TF";
   }
 
-  return "MC";
+  if (bonneReponses.length === 0 && !possedeMauvaideReponse) {
+    return "ESSAY";
+  }
+
+  if (bonneReponses.length > 0 && !possedeMauvaideReponse) {
+    return "SA";
+  }
+
+  if (possedeMauvaideReponse) {
+    return "MC";
+  }
+
+  return "UNKNOWN";
 };
 
 module.exports = GIFTParser;
