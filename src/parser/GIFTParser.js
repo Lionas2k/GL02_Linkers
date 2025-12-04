@@ -107,11 +107,18 @@ GIFTParser.prototype.question = function (input) {
 
   let questionText = this.enonce(input);
 
+  while (
+    input.length > 0 &&
+    (input[0] === "\n" || input[0] === "\r" || input[0] === " ")
+  ) {
+    this.next(input);
+  }
+
   const hasAnswerBlock = this.check("{", input);
 
   if (hasAnswerBlock) {
     this.expect("{", input);
-    let { reponses, bonneReponses, possedeMauvaideReponse, possedeAssocie } =
+    let { reponses, possedeMauvaideReponse, possedeAssocie } =
       this.answerset(input);
 
     let meta = this.metadata(input);
@@ -124,15 +131,9 @@ GIFTParser.prototype.question = function (input) {
       questionText += " ___ " + suiteQuestion;
     }
 
-    let type = this.type(bonneReponses, possedeMauvaideReponse, possedeAssocie);
+    let type = this.type(reponses, possedeMauvaideReponse, possedeAssocie);
 
-    const q = new Question(
-      questionId,
-      questionText,
-      type,
-      reponses,
-      bonneReponses
-    );
+    const q = new Question(questionId, questionText, type, reponses);
 
     q.metadata = meta;
     this.parsedQuestions.push(q);
@@ -141,7 +142,7 @@ GIFTParser.prototype.question = function (input) {
       this.next(input);
     }
 
-    const q = new Question(questionId, questionText, "DESC", [], []);
+    const q = new Question(questionId, questionText, "DESC", []);
     this.parsedQuestions.push(q);
   }
 
@@ -150,25 +151,21 @@ GIFTParser.prototype.question = function (input) {
 
 GIFTParser.prototype.answerset = function (input) {
   var reponses = [];
-  var bonneReponses = [];
   var possedeMauvaideReponse = false;
   var possedeAssocie = false;
 
   while (input.length > 0 && input[0] !== "}") {
     var sym = input[0];
+
     if (sym.startsWith("TRUE") || sym.startsWith("T#") || sym === "T") {
       this.next(input);
-      reponses.push("TRUE");
-      reponses.push("FALSE");
-      bonneReponses.push("TRUE");
+      reponses.push({ resp: "TRUE", isCorrect: true });
       continue;
     }
 
     if (sym.startsWith("FALSE") || sym.startsWith("F#") || sym === "F") {
       this.next(input);
-      reponses.push("TRUE");
-      reponses.push("FALSE");
-      bonneReponses.push("FALSE");
+      reponses.push({ resp: "FALSE", isCorrect: true });
       continue;
     }
 
@@ -185,19 +182,27 @@ GIFTParser.prototype.answerset = function (input) {
         let parts = answerText.split("->");
         let left = parts[0].trim();
         let right = parts[1].trim();
-        reponses.push(left);
-        bonneReponses.push(right);
+        reponses.push({ resp: left, assoc: right, isCorrect: true });
         continue;
       }
 
-      answerText = answerText.split("#")[0].trim();
+      let parts = answerText.split("#");
+      answerText = parts[0].trim();
+      feedback = parts[1] ? parts[1].trim() : "";
 
       if (sym === "~") {
-        reponses.push(answerText);
-        var possedeMauvaideReponse = true;
+        if (feedback !== "") {
+          reponses.push({ resp: answerText, isCorrect: false, feedback });
+        } else {
+          reponses.push({ resp: answerText, isCorrect: false });
+        }
+        possedeMauvaideReponse = true;
       } else if (sym === "=") {
-        reponses.push(answerText);
-        bonneReponses.push(answerText);
+        if (feedback !== "") {
+          reponses.push({ resp: answerText, isCorrect: true, feedback });
+        } else {
+          reponses.push({ resp: answerText, isCorrect: true });
+        }
       }
     } else {
       this.next(input);
@@ -205,7 +210,6 @@ GIFTParser.prototype.answerset = function (input) {
   }
   return {
     reponses,
-    bonneReponses,
     possedeMauvaideReponse,
     possedeAssocie,
   };
@@ -251,7 +255,7 @@ GIFTParser.prototype.metadata = function (input) {
 };
 
 GIFTParser.prototype.type = function (
-  bonneReponses,
+  reponses,
   possedeMauvaideReponse,
   possedeAssocie
 ) {
@@ -259,9 +263,11 @@ GIFTParser.prototype.type = function (
     return "MATCH";
   }
 
+  const bonneReponses = reponses.filter((r) => r.isCorrect);
+
   if (
     bonneReponses.length === 1 &&
-    (bonneReponses[0] === "TRUE" || bonneReponses[0] === "FALSE")
+    (bonneReponses[0].resp === "TRUE" || bonneReponses[0].resp === "FALSE")
   ) {
     return "TF";
   }

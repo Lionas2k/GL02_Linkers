@@ -1,10 +1,9 @@
 class Question {
-  constructor(id, enonce, type, reponses, bonneReponses) {
+  constructor(id, enonce, type, reponses) {
     this.id = id;
     this.enonce = enonce;
     this.type = type;
     this.reponses = reponses;
-    this.bonneReponses = bonneReponses;
   }
 
   /**
@@ -40,11 +39,11 @@ class Question {
   }
 
   /**
-   * Retourne les réponses de la question
+   * Retourne les bonnes réponses de la question
    * @return {Array} Les bonnes réponses
    */
   getBonnesReponses() {
-    return this.bonneReponses;
+    return this.reponses.filter((r) => r.isCorrect);
   }
 
   /**
@@ -58,18 +57,10 @@ class Question {
       this.enonce === question.enonce &&
       this.type === question.type &&
       this.reponses.length === question.reponses.length &&
-      this.reponses.every((r, index) => r === question.reponses[index])
+      this.reponses.every(
+        (r, index) => r.resp === question.reponses[index].resp
+      )
     );
-  }
-
-  /**
-   * Permet de savoir si les réponses données sont correctes
-   * Pour cela, on compare les index des réponses données avec les index des bonnes réponses
-   * @param indexReponses - Les index des réponses données
-   * @return {boolean} true si les réponses sont correctes, false sinon
-   */
-  isCorrect(indexReponses) {
-    return indexReponses.every((index) => this.bonneReponses.includes(index));
   }
 }
 
