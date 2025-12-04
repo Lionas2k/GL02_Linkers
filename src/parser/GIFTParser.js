@@ -111,7 +111,7 @@ GIFTParser.prototype.question = function (input) {
 
   if (hasAnswerBlock) {
     this.expect("{", input);
-    let { reponses, bonneReponses, possedeMauvaideReponse } =
+    let { reponses, bonneReponses, possedeMauvaideReponse, possedeAssocie } =
       this.answerset(input);
 
     let meta = this.metadata(input);
@@ -119,17 +119,12 @@ GIFTParser.prototype.question = function (input) {
     this.expect("}", input);
 
     let suiteQuestion = this.enonce(input);
-    let questionImbriquee = false;
+
     if (suiteQuestion.length > 0) {
       questionText += " ___ " + suiteQuestion;
-      questionImbriquee = true;
     }
 
-    let type = this.type(
-      bonneReponses,
-      possedeMauvaideReponse,
-      questionImbriquee
-    );
+    let type = this.type(bonneReponses, possedeMauvaideReponse, possedeAssocie);
 
     const q = new Question(
       questionId,
@@ -163,17 +158,23 @@ GIFTParser.prototype.answerset = function (input) {
     var sym = input[0];
     if (sym.startsWith("TRUE") || sym.startsWith("T#") || sym === "T") {
       this.next(input);
+      reponses.push("TRUE");
+      reponses.push("FALSE");
       bonneReponses.push("TRUE");
       continue;
     }
 
     if (sym.startsWith("FALSE") || sym.startsWith("F#") || sym === "F") {
       this.next(input);
+      reponses.push("TRUE");
+      reponses.push("FALSE");
       bonneReponses.push("FALSE");
       continue;
     }
+
     if (sym === "=" || sym === "~") {
       this.next(input);
+
       var answerText = this.next(input);
       if (!answerText || answerText === "}") {
         continue;
@@ -181,6 +182,11 @@ GIFTParser.prototype.answerset = function (input) {
 
       if (answerText.includes("->")) {
         possedeAssocie = true;
+        let parts = answerText.split("->");
+        let left = parts[0].trim();
+        let right = parts[1].trim();
+        reponses.push(left);
+        bonneReponses.push(right);
         continue;
       }
 
