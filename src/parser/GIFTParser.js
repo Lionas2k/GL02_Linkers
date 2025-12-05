@@ -232,7 +232,11 @@ GIFTParser.prototype.enonce = function (input) {
 };
 
 GIFTParser.prototype.questionId = function (input) {
-  return this.next(input);
+  let questionId = [];
+  while (input.length > 0 && input[0] !== "::") {
+    questionId.push(this.next(input));
+  }
+  return questionId.join(" ");
 };
 
 GIFTParser.prototype.metadata = function (input) {
