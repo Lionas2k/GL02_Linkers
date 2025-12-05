@@ -62,7 +62,6 @@ GIFTParser.prototype.accept = function (s) {
   var idx = this.symb.indexOf(s);
   // index 0 exists
   if (idx === -1) {
-    this.errMsg("symbol " + s + " unknown", [" "]);
     return false;
   }
 
@@ -71,7 +70,7 @@ GIFTParser.prototype.accept = function (s) {
 
 // check : check whether the arg elt is on the head of the list
 GIFTParser.prototype.check = function (s, input) {
-  if (this.accept(input[0]) == this.accept(s)) {
+  if (this.accept(input[0]) === this.accept(s)) {
     return true;
   }
   return false;
@@ -101,50 +100,68 @@ GIFTParser.prototype.listQuestions = function (input) {
 
 // question = "::" question-title "::" question-text CRLF [answerset / metadata / subquestion *subquestion] *CRLF
 GIFTParser.prototype.question = function (input) {
+  //Titre de la question
   this.expect("::", input);
   const questionId = this.questionId(input);
   this.expect("::", input);
 
-  let questionText = this.enonce(input);
+  let questionText = "";
+  let reponses = [];
+  let type = "DESC";
+  let meta = {};
 
-  while (
-    input.length > 0 &&
-    (input[0] === "\n" || input[0] === "\r" || input[0] === " ")
-  ) {
-    this.next(input);
-  }
-
-  const hasAnswerBlock = this.check("{", input);
-
-  if (hasAnswerBlock) {
-    this.expect("{", input);
-    let { reponses, possedeMauvaideReponse, possedeAssocie } =
-      this.answerset(input);
-
-    let meta = this.metadata(input);
-
-    this.expect("}", input);
-
-    let suiteQuestion = this.enonce(input);
-
-    if (suiteQuestion.length > 0) {
-      questionText += " ___ " + suiteQuestion;
-    }
-
-    let type = this.type(reponses, possedeMauvaideReponse, possedeAssocie);
-
-    const q = new Question(questionId, questionText, type, reponses);
-
-    q.metadata = meta;
-    this.parsedQuestions.push(q);
-  } else {
-    while (input.length > 0 && (input[0] === "\n" || input[0] === "\r")) {
+  while (input.length > 0) {
+    // Gestion retours ligne
+    if (input[0] === "\n" || input[0] === "\r") {
       this.next(input);
+      continue;
     }
 
-    const q = new Question(questionId, questionText, "DESC", []);
-    this.parsedQuestions.push(q);
+    //Si nouvelle question
+    if (input[0] === "::") {
+      break;
+    }
+
+    if (this.check("{", input)) {
+      this.expect("{", input);
+      let rep = this.answerset(input);
+
+      reponses = reponses.concat(rep.reponses);
+
+      if (type === "DESC") {
+        type = this.type(
+          rep.reponses,
+          rep.possedeMauvaideReponse,
+          rep.possedeAssocie
+        );
+      }
+
+      this.expect("}", input);
+    }
+    // Si c'est [markdown] ou [html]
+    else if (input[0] === "[") {
+      this.next(input);
+      let content = "";
+      while (input.length > 0 && input[0] !== "]") {
+        content += this.next(input);
+      }
+      this.expect("]", input);
+    } else {
+      let textSegment = this.enonce(input);
+      if (textSegment) {
+        questionText += (questionText ? " " : "") + textSegment;
+      } else {
+        if (input.length > 0 && !this.check("{", input) && input[0] !== "::") {
+          this.next(input);
+        }
+      }
+    }
   }
+
+  const q = new Question(questionId, questionText.trim(), type, reponses);
+
+  q.metadata = meta;
+  this.parsedQuestions.push(q);
 
   return true;
 };
