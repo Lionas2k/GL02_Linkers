@@ -157,6 +157,11 @@ GIFTParser.prototype.answerset = function (input) {
   while (input.length > 0 && input[0] !== "}") {
     var sym = input[0];
 
+    if (sym.includes(":") && !sym.startsWith("::")) {
+      this.next(input);
+      continue;
+    }
+
     if (sym.startsWith("TRUE") || sym.startsWith("T#") || sym === "T") {
       this.next(input);
       reponses.push({ resp: "TRUE", isCorrect: true });
@@ -171,6 +176,13 @@ GIFTParser.prototype.answerset = function (input) {
 
     if (sym === "=" || sym === "~") {
       this.next(input);
+
+      if (
+        input.length > 0 &&
+        (input[0] === "=" || input[0] === "~" || input[0] === "}")
+      ) {
+        continue;
+      }
 
       var answerText = this.next(input);
       if (!answerText || answerText === "}") {
@@ -223,7 +235,9 @@ GIFTParser.prototype.enonce = function (input) {
     input[0] !== "{" &&
     input[0] !== "\n" &&
     input[0] !== "\r" &&
-    input[0] !== "::"
+    input[0] !== "::" &&
+    input[0] !== "}" &&
+    input[0] !== "["
   ) {
     result.push(this.next(input));
   }
