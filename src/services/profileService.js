@@ -1,5 +1,6 @@
 /**
- * MCQ = QCM
+ * MC = QCM 
+ * SA = Question à réponse courte
  * TF = Vrai/Faux
  * MATCH = Associer les paires
  * NUMERIC = Réponse numérique
@@ -7,7 +8,7 @@
  * OPEN = Question ouverte
  * OTHER = Autre type
  */
-const DEFAULT_TYPES = ['MCQ','TF','MATCH','NUMERIC','CLOZE','OPEN','OTHER'];
+const DEFAULT_TYPES = ['MC','SA', 'TF','MATCH','NUMERIC','CLOZE','OPEN','OTHER'];
 
 /** 
  * Build the profile of a test from a list of questions
@@ -57,10 +58,14 @@ function printHistogram(profile, options = {}) {
 }
 
 /**
- * Compare two profiles of tests and return a similarity score and differences
- * pA, pB: the two profiles to compare
- * Method : we compare the profiles based on their type distributions in percentages and return a similarity score from 0 to 100
- * On utilise la distance L1 normalisée: sim = (1 - 0.5 * sum |pAi - pBi|) * 100 // à expliquer
+ *  Compare two profiles of tests and return a similarity score and differences
+ *  pA, pB: the two profiles to compare
+ *  Method : we compare the profiles based on their type distributions in percentages and return a similarity score from 0 to 100
+ *  We use the normalized L1 distance: sum = (1 - 0.5 * sum |pAi - pBi|) * 100
+ *  |pAi - pBi| : absolute difference between percentages of type i in profiles A and B
+ *  sum |pAi - pBi| : sum of absolute differences for all types i
+ *  The sum is normalized between 0 and 2 (0 = identical profiles, 2 = completely different profiles)
+ *  We convert it to a similarity score between 0 and 100 by computing (1 - sum/2) * 100
  */
 function compareProfiles(pA, pB) {
   const keys = Array.from(new Set([...Object.keys(pA.percents), ...Object.keys(pB.percents)]));
@@ -68,9 +73,9 @@ function compareProfiles(pA, pB) {
   for (const k of keys) {
     const a = pA.percents[k] || 0;
     const b = pB.percents[k] || 0;
-    sumAbs += Math.abs(a - b) / 100; // convert percent to fraction
+    sumAbs += Math.abs(a - b) / 100; // Convert percent to fraction
   }
-  // sumAbs in [0, 2] => normalized similarity:
+  // sumAbs in [0, 2] => normalized similarity
   const similarity = Math.max(0, (1 - (sumAbs / 2))) * 100;
   // Also prepare a differences object for reporting
   const diffs = {};
@@ -81,7 +86,7 @@ function compareProfiles(pA, pB) {
       diffPercent: ( (pA.percents[k] || 0) - (pB.percents[k] || 0) )
     };
   }
-  return { similarity: Math.round(similarity * 100) / 100, diffs }; // similarity en pourcentage arrondi
+  return { similarity: Math.round(similarity * 100) / 100, diffs }; // Similarity in percent rounded to 2 decimals
 }
 
 module.exports = { buildProfile, printHistogram, compareProfiles, DEFAULT_TYPES };
