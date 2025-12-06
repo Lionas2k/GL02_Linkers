@@ -27,9 +27,14 @@ class ExamService {
             throw new Error("Invalid exam: must contain 15–20 unique questions.");
         }
 
-        // On part du principe que Alexis fournira q.raw
+        // Utiliser q.raw pour reconstruire le fichier GIFT
         const content = exam.getAll()
-            .map(q => q.raw)
+            .map(q => {
+                if (!q.raw) {
+                    throw new Error(`Question ${q.id || q.getId()} does not have a raw GIFT format. Make sure the parser has been used.`);
+                }
+                return q.raw;
+            })
             .join("\n\n");
 
         fs.writeFileSync(outputPath, content, "utf8");
@@ -59,11 +64,11 @@ class ExamService {
         for (const q of questions) {
             console.log("\n==============================");
             console.log("Question :");
-            console.log(q.text);
+            console.log(q.enonce || q.getTexte());
 
             const answer = await ask("Votre réponse : ");
             responses.push({
-                questionId: q.id,
+                questionId: q.id || q.getId(),
                 userAnswer: answer
             });
         }
@@ -80,7 +85,7 @@ class ExamService {
         const details = [];
 
         responses.forEach(res => {
-            const q = questions.find(q => q.id === res.questionId);
+            const q = questions.find(q => (q.id || q.getId()) === res.questionId);
 
             if (!q) {
                 details.push({
@@ -97,8 +102,8 @@ class ExamService {
             }
 
             details.push({
-                questionId: q.id,
-                questionText: q.text,
+                questionId: q.id || q.getId(),
+                questionText: q.enonce || q.getTexte(),
                 userAnswer: res.userAnswer,
                 correct: isCorrect
             });

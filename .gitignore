@@ -1,3 +1,13 @@
 node_modules/
 .DS_Store
 npm-debug.log
+
+# Fichiers temporaires de test
+tests/temp/
+*.gift
+!data/*.gift
+
+# Fichiers de test générés à la racine (ne doivent pas être commités)
+/testExam.gift
+/out.gift
+/generatedExam.gift
