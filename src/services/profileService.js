@@ -5,10 +5,10 @@
  * MATCH = Associer les paires
  * NUMERIC = Réponse numérique
  * CLOZE = Texte à trous
- * OPEN = Question ouverte
+ * ESSAY = Question ouverte
  * OTHER = Autre type
  */
-const DEFAULT_TYPES = ['MC','SA', 'TF','MATCH','NUMERIC','CLOZE','OPEN','OTHER'];
+const DEFAULT_TYPES = ['MC','SA', 'TF','MATCH','ESSAY','CLOZE','NUMERIC','OTHER'];
 
 /** 
  * Build the profile of a test from a list of questions
@@ -89,4 +89,9 @@ function compareProfiles(pA, pB) {
   return { similarity: Math.round(similarity * 100) / 100, diffs }; // Similarity in percent rounded to 2 decimals
 }
 
-module.exports = { buildProfile, printHistogram, compareProfiles, DEFAULT_TYPES };
+module.exports = { 
+  buildProfile, 
+  printHistogram, 
+  compareProfiles, 
+  DEFAULT_TYPES 
+};

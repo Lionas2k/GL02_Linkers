@@ -3,7 +3,7 @@ const { buildProfile, printHistogram, compareProfiles } = require('../src/servic
 describe('profileService', () => {
   test('buildProfile counts types', () => {
     const questions = [
-      {id:1,type:'MC'}, {id:2,type:'MC'}, {id:3,type:'SA'}, {id:4,type:'essay'}
+      {id:1,type:'MC'}, {id:2,type:'MC'}, {id:3,type:'SA'}, {id:4,type:'calcul'}
     ];
     const p = buildProfile(questions);
     expect(p.total).toBe(4);
@@ -14,7 +14,7 @@ describe('profileService', () => {
 
   test('buildProfile compute percentages', () => {
     const questions = [
-      {id:1,type:'MC'}, {id:2,type:'MC'}, {id:3,type:'SA'}, {id:4,type:'essay'}
+      {id:1,type:'MC'}, {id:2,type:'MC'}, {id:3,type:'SA'}, {id:4,type:'calcul'}
     ];
     const p = buildProfile(questions);
     expect(p.total).toBe(4);
@@ -31,7 +31,7 @@ describe('profileService', () => {
   });
 
   test('printHistogram returns an accurate histogram', () => {
-    const p = buildProfile([{id:1,type:'MC'}, {id:2,type:'MC'}, {id:3,type:'SA'}, {id:4,type:'essay'}]);
+    const p = buildProfile([{id:1,type:'MC'}, {id:2,type:'MC'}, {id:3,type:'SA'}, {id:4,type:'calcul'}]);
     const out = printHistogram(p);
     expect(typeof out).toBe('string');
     expect(out).toContain('MC       ██████████████████████████████ 2');
@@ -59,5 +59,11 @@ describe('profileService', () => {
     const d = buildProfile([{id:1,type:'MC'},{id:2,type:'MC'},{id:3,type:'SA'}]);
     const res2 = compareProfiles(c,d);
     expect(res2.similarity).toBe(66.67);
+
+    // Third test: identical except one have one extra type
+    const e = buildProfile([{id:1,type:'MC'},{id:2,type:'SA'}]);
+    const f = buildProfile([{id:1,type:'MC'},{id:2,type:'SA'},{id:3,type:'TF'}]);
+    const res3 = compareProfiles(e,f);
+    expect(res3.similarity).toBe(66.67);
   });
 });
