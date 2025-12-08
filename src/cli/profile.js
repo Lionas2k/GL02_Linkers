@@ -65,8 +65,21 @@ const { buildProfile, printHistogram, compareProfiles } = require('../services/p
  * @returns {string} - Profil formaté
  */
 function formatProfileText(profile) {
-  // TODO: Implémenter le formatage text du profil
-  return '';
+  let output = '\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  output += `📊 PROFIL DE L'EXAMEN\n`;
+  output += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  output += `Total de questions: ${profile.total}\n\n`;
+  output += `Répartition par type:\n`;
+  
+  const types = Object.keys(profile.counts || {}).sort();
+  types.forEach(type => {
+    const count = profile.counts[type];
+    const percent = profile.percents[type] || 0;
+    output += `  ${type.padEnd(10)} ${count.toString().padStart(3)} questions (${percent.toFixed(2)}%)\n`;
+  });
+  
+  output += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  return output;
 }
 
 /**
@@ -75,7 +88,6 @@ function formatProfileText(profile) {
  * @returns {string} - JSON formaté
  */
 function formatProfileJSON(profile) {
-  // TODO: Implémenter le formatage JSON
   return JSON.stringify(profile, null, 2);
 }
 
@@ -86,8 +98,26 @@ function formatProfileJSON(profile) {
  * @returns {string} - Comparaison formatée
  */
 function formatComparison(comparison, detailed = false) {
-  // TODO: Implémenter le formatage de la comparaison
-  return '';
+  let output = '\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  output += `🔍 COMPARAISON D'EXAMENS\n`;
+  output += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  output += `Score de similarité: ${comparison.similarity}%\n\n`;
+  
+  if (comparison.differences && Object.keys(comparison.differences).length > 0) {
+    output += `Différences par type:\n`;
+    Object.keys(comparison.differences).forEach(type => {
+      const diff = comparison.differences[type];
+      output += `  ${type.padEnd(10)} Examen 1: ${diff.exam1 || 0}, Examen 2: ${diff.exam2 || 0}, Différence: ${diff.diff || 0}\n`;
+    });
+  }
+  
+  if (detailed && comparison.details) {
+    output += `\nDétails:\n`;
+    output += JSON.stringify(comparison.details, null, 2);
+  }
+  
+  output += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  return output;
 }
 
 /**
@@ -97,8 +127,23 @@ function formatComparison(comparison, detailed = false) {
  * @returns {string} - Histogramme trié
  */
 function sortHistogram(histogram, sortOrder) {
-  // TODO: Implémenter le tri de l'histogramme
-  return histogram;
+  if (!histogram || sortOrder === 'count') {
+    return histogram; // Déjà trié par count par défaut
+  }
+  
+  const lines = histogram.split('\n').filter(line => line.trim());
+  const header = lines[0] || '';
+  const dataLines = lines.slice(1);
+  
+  if (sortOrder === 'type' || sortOrder === 'name') {
+    dataLines.sort((a, b) => {
+      const typeA = a.split(/\s+/)[0] || '';
+      const typeB = b.split(/\s+/)[0] || '';
+      return typeA.localeCompare(typeB);
+    });
+  }
+  
+  return [header, ...dataLines].join('\n');
 }
 
 /**
@@ -124,12 +169,22 @@ function handleError(error, context) {
  * @returns {Array} - Liste de questions parsées
  */
 function loadGIFTFile(filePath) {
-  // TODO: Implémenter le chargement et parsing
-  // 1. Lire le fichier avec fs.readFileSync()
-  // 2. Créer une instance GIFTParser
-  // 3. Parser le contenu
-  // 4. Retourner la liste de questions (parser.parsedQuestions)
-  return [];
+  try {
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`Fichier introuvable: ${filePath}`);
+    }
+    
+    const data = fs.readFileSync(filePath, 'utf8');
+    const parser = new GIFTParser(false, false);
+    parser.parse(data);
+    
+    return parser.parsedQuestions || [];
+  } catch (error) {
+    if (error.message.includes('introuvable')) {
+      throw error;
+    }
+    throw new Error(`Erreur lors du parsing du fichier GIFT: ${error.message}`);
+  }
 }
 
 /**
@@ -150,18 +205,22 @@ function registerProfileCommands(program) {
       validator: ['text', 'json']
     })
     .action(({ args, options }) => {
-      console.log('📈 Commande: profile show');
-      console.log(`   Fichier: ${args.file}`);
-      console.log(`   Format: ${options.format}`);
-      console.log('\n⚠️  En attente du module profil d\'Enzo');
-      console.log('   Cette commande appellera: generateProfile()');
-      console.log('   Comptage des types de questions:');
-      console.log('   - QCM (Multiple Choice Questions)');
-      console.log('   - Vrai/Faux (True/False)');
-      console.log('   - Numériques');
-      console.log('   - Matching');
-      console.log('   - Autres types');
-      console.log('   Une fois le module profil prêt, cette fonctionnalité sera opérationnelle.');
+      try {
+        // Charger l'examen
+        const questions = loadGIFTFile(args.file);
+        
+        // Générer le profil
+        const profile = buildProfile(questions);
+        
+        // Formater et afficher
+        if (options.format === 'json') {
+          console.log(formatProfileJSON(profile));
+        } else {
+          console.log(formatProfileText(profile));
+        }
+      } catch (error) {
+        handleError(error, 'profile show');
+      }
     });
 
   // Commande: profile histogram
@@ -177,17 +236,23 @@ function registerProfileCommands(program) {
       validator: ['count', 'type', 'name']
     })
     .action(({ args, options }) => {
-      console.log('📊 Commande: profile histogram');
-      console.log(`   Fichier: ${args.file}`);
-      console.log(`   Largeur: ${options.width}`);
-      console.log(`   Tri: ${options.sort}`);
-      console.log('\n⚠️  En attente du module profil d\'Enzo');
-      console.log('   Cette commande appellera: generateHistogram()');
-      console.log('   Exemple de sortie attendue:');
-      console.log('   MCQ    ███████ 12');
-      console.log('   TF     ██ 2');
-      console.log('   MATCH  █ 1');
-      console.log('   Une fois le module profil prêt, cette fonctionnalité sera opérationnelle.');
+      try {
+        // Charger l'examen
+        const questions = loadGIFTFile(args.file);
+        
+        // Générer le profil
+        const profile = buildProfile(questions);
+        
+        // Générer l'histogramme
+        const histogram = printHistogram(profile, { width: options.width, barChar: '█' });
+        
+        // Trier si nécessaire
+        const sortedHistogram = sortHistogram(histogram, options.sort);
+        
+        console.log(sortedHistogram);
+      } catch (error) {
+        handleError(error, 'profile histogram');
+      }
     });
 
   // Commande: profile compare
@@ -203,17 +268,27 @@ function registerProfileCommands(program) {
       flag: true
     })
     .action(({ args, options }) => {
-      console.log('🔍 Commande: profile compare');
-      console.log(`   Examen 1: ${args.file1}`);
-      console.log(`   Examen 2: ${args.file2}`);
-      console.log(`   Format: ${options.format}`);
-      if (options.detailed) {
-        console.log(`   Mode détaillé: activé`);
+      try {
+        // Charger les deux examens
+        const questions1 = loadGIFTFile(args.file1);
+        const questions2 = loadGIFTFile(args.file2);
+        
+        // Générer les profils
+        const profile1 = buildProfile(questions1);
+        const profile2 = buildProfile(questions2);
+        
+        // Comparer
+        const comparison = compareProfiles(profile1, profile2);
+        
+        // Formater et afficher
+        if (options.format === 'json') {
+          console.log(JSON.stringify(comparison, null, 2));
+        } else {
+          console.log(formatComparison(comparison, options.detailed));
+        }
+      } catch (error) {
+        handleError(error, 'profile compare');
       }
-      console.log('\n⚠️  En attente du module profil d\'Enzo');
-      console.log('   Cette commande appellera: compareExams()');
-      console.log('   Affichera: similarité, différences par type de question');
-      console.log('   Une fois le module profil prêt, cette fonctionnalité sera opérationnelle.');
     });
 }
 
