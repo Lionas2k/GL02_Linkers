@@ -1,12 +1,25 @@
+# Node
 node_modules/
-.DS_Store
 npm-debug.log
+.DS_Store
 
-# Fichiers de planification et documentation de travail
+# Fichiers temporaires de test
+tests/temp/
+
+# Gift files (exclure tous, sauf ceux du dossier data)
+*.gift
+!data/*.gift
+
+# Fichiers générés à la racine (examen simulé, exports, etc.)
+/testExam.gift
+/out.gift
+/generatedExam.gift
+
+# Documentation interne de travail (ne jamais commiter)
 *_PLAN*.md
 *_CHECKLIST*.md
 PROCHAIN_COMMITS.md
 
-# Scripts PowerShell de développement
+# Scripts PowerShell internes
 cleanup.ps1
 git_verification.ps1
