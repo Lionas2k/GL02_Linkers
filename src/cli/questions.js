@@ -55,10 +55,31 @@ const CollectionQuestion = require('../model/CollectionQuestion');
  * @returns {string} - Question formatée
  */
 function formatQuestionText(question, format = 'detailed') {
-  // TODO: Implémenter le formatage selon le format
-  // Format detailed : affichage complet avec toutes les informations
-  // Format compact : affichage condensé
-  return '';
+  if (!question) return '';
+  
+  if (format === 'compact') {
+    const text = question.text || question.questionText || '';
+    const shortText = text.length > 80 ? text.substring(0, 80) + '...' : text;
+    return `[${question.id || 'N/A'}] ${question.type || 'UNKNOWN'}: ${shortText}`;
+  }
+  
+  // Format detailed
+  let output = `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  output += `ID: ${question.id || 'N/A'}\n`;
+  output += `Type: ${question.type || 'UNKNOWN'}\n`;
+  output += `Points: ${question.points || 1}\n`;
+  output += `\nQuestion:\n${question.text || question.questionText || 'N/A'}\n`;
+  
+  if (question.answers && question.answers.length > 0) {
+    output += `\nRéponses:\n`;
+    question.answers.forEach((answer, index) => {
+      const marker = answer.correct ? '✓' : ' ';
+      output += `  ${marker} ${index + 1}. ${answer.text || answer}\n`;
+    });
+  }
+  
+  output += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  return output;
 }
 
 /**
@@ -67,7 +88,6 @@ function formatQuestionText(question, format = 'detailed') {
  * @returns {string} - JSON formaté
  */
 function formatQuestionsJSON(questions) {
-  // TODO: Implémenter le formatage JSON
   return JSON.stringify(questions, null, 2);
 }
 
@@ -94,13 +114,36 @@ function handleError(error, context) {
  * @returns {CollectionQuestion} - Collection de questions parsées
  */
 function loadGIFTFile(filePath) {
-  // TODO: Implémenter le chargement et parsing
-  // 1. Lire le fichier avec fs.readFileSync()
-  // 2. Créer une instance GIFTParser
-  // 3. Parser le contenu
-  // 4. Créer une CollectionQuestion et ajouter les questions
-  // 5. Retourner la collection
-  return null;
+  try {
+    // Vérifier que le fichier existe
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`Fichier introuvable: ${filePath}`);
+    }
+    
+    // Lire le fichier
+    const data = fs.readFileSync(filePath, 'utf8');
+    
+    // Créer une instance du parser
+    const parser = new GIFTParser(false, false);
+    
+    // Parser le contenu
+    parser.parse(data);
+    
+    // Créer une collection et ajouter les questions
+    const collection = new CollectionQuestion();
+    if (parser.parsedQuestions && Array.isArray(parser.parsedQuestions)) {
+      parser.parsedQuestions.forEach(question => {
+        collection.addQuestion(question);
+      });
+    }
+    
+    return collection;
+  } catch (error) {
+    if (error.message.includes('introuvable')) {
+      throw error;
+    }
+    throw new Error(`Erreur lors du parsing du fichier GIFT: ${error.message}`);
+  }
 }
 
 /**
@@ -111,9 +154,41 @@ function loadGIFTFile(filePath) {
  * @returns {Array} - Liste de questions trouvées
  */
 function searchQuestions(collection, keyword, type) {
-  // TODO: Implémenter la recherche
-  // Utiliser les méthodes de CollectionQuestion pour rechercher
-  return [];
+  if (!collection || collection.size() === 0) {
+    return [];
+  }
+  
+  const allQuestions = collection.getAll();
+  const keywordLower = keyword.toLowerCase();
+  
+  let results = allQuestions.filter(question => {
+    // Recherche par ID
+    if (question.id && question.id.toLowerCase().includes(keywordLower)) {
+      return true;
+    }
+    
+    // Recherche par type
+    if (question.type && question.type.toUpperCase() === keyword.toUpperCase()) {
+      return true;
+    }
+    
+    // Recherche dans le texte de la question
+    const questionText = (question.text || question.questionText || '').toLowerCase();
+    if (questionText.includes(keywordLower)) {
+      return true;
+    }
+    
+    return false;
+  });
+  
+  // Filtrer par type si spécifié
+  if (type) {
+    results = results.filter(question => {
+      return question.type && question.type.toUpperCase() === type.toUpperCase();
+    });
+  }
+  
+  return results;
 }
 
 /**
@@ -123,9 +198,16 @@ function searchQuestions(collection, keyword, type) {
  * @returns {Object|null} - Question trouvée ou null
  */
 function getQuestionById(collection, id) {
-  // TODO: Implémenter la récupération par ID
-  // Utiliser les méthodes de CollectionQuestion
-  return null;
+  if (!collection || collection.size() === 0) {
+    return null;
+  }
+  
+  const allQuestions = collection.getAll();
+  const question = allQuestions.find(q => {
+    return q.id && q.id.toLowerCase() === id.toLowerCase();
+  });
+  
+  return question || null;
 }
 
 /**
@@ -153,16 +235,33 @@ function registerQuestionsCommands(program) {
       validator: ['text', 'json']
     })
     .action(({ args, options }) => {
-      console.log('🔍 Commande: questions search');
-      console.log(`   Mot-clé: ${args.keyword}`);
-      if (options.type) {
-        console.log(`   Type: ${options.type}`);
+      try {
+        // Charger et parser le fichier GIFT
+        const collection = loadGIFTFile(options.file);
+        
+        // Rechercher les questions
+        const results = searchQuestions(collection, args.keyword, options.type);
+        
+        if (results.length === 0) {
+          console.log(`❌ Aucune question trouvée pour "${args.keyword}"`);
+          if (options.type) {
+            console.log(`   Type filtré: ${options.type}`);
+          }
+          process.exit(0);
+        }
+        
+        // Formater et afficher les résultats
+        if (options.format === 'json') {
+          console.log(formatQuestionsJSON(results));
+        } else {
+          console.log(`\n✅ ${results.length} question(s) trouvée(s):\n`);
+          results.forEach((question, index) => {
+            console.log(`${index + 1}.${formatQuestionText(question, 'compact')}`);
+          });
+        }
+      } catch (error) {
+        handleError(error, 'questions search');
       }
-      console.log(`   Fichier: ${options.file}`);
-      console.log(`   Format: ${options.format}`);
-      console.log('\n⚠️  En attente du parser GIFT d\'Alexis');
-      console.log('   Cette commande appellera: parseGIFT() et searchQuestion()');
-      console.log('   Une fois le module parser prêt, cette fonctionnalité sera opérationnelle.');
     });
 
   // Commande: questions show
@@ -178,13 +277,27 @@ function registerQuestionsCommands(program) {
       validator: ['detailed', 'compact']
     })
     .action(({ args, options }) => {
-      console.log('📄 Commande: questions show');
-      console.log(`   ID: ${args.id}`);
-      console.log(`   Fichier: ${options.file}`);
-      console.log(`   Format: ${options.format}`);
-      console.log('\n⚠️  En attente du parser GIFT d\'Alexis');
-      console.log('   Cette commande appellera: parseGIFT() et getQuestionById()');
-      console.log('   Une fois le module parser prêt, cette fonctionnalité sera opérationnelle.');
+      try {
+        // Charger et parser le fichier GIFT
+        const collection = loadGIFTFile(options.file);
+        
+        // Récupérer la question par ID
+        const question = getQuestionById(collection, args.id);
+        
+        if (!question) {
+          console.error(`❌ Question introuvable: ${args.id}`);
+          process.exit(1);
+        }
+        
+        // Formater et afficher la question
+        if (options.format === 'compact') {
+          console.log(formatQuestionText(question, 'compact'));
+        } else {
+          console.log(formatQuestionText(question, 'detailed'));
+        }
+      } catch (error) {
+        handleError(error, 'questions show');
+      }
     });
 }
 
