@@ -2,7 +2,7 @@
 
 Outil en ligne de commande pour la gestion des examens au format GIFT (Moodle) développé pour le ministère de l'Éducation de Sealand.
 
-## 📋 Table des matières
+##  Table des matières
 
 1. [Description](#description)
 2. [Objectifs du logiciel](#objectifs-du-logiciel)
@@ -22,7 +22,7 @@ Outil en ligne de commande pour la gestion des examens au format GIFT (Moodle) d
 
 ---
 
-## 🎯 Description
+##  Description
 
 GL02 Linkers est un outil CLI (Command Line Interface) permettant de gérer complètement le cycle de vie des examens au format GIFT, le format standard utilisé par Moodle.
 
@@ -43,7 +43,7 @@ GL02 Linkers est un outil CLI (Command Line Interface) permettant de gérer comp
 
 ---
 
-## 🎯 Objectifs du logiciel
+##  Objectifs du logiciel
 
 Le logiciel GL02 Linkers permet de :
 
@@ -57,7 +57,7 @@ Le logiciel GL02 Linkers permet de :
 
 ---
 
-## 🏗️ Architecture générale
+##  Architecture générale
 
 GL02 Linkers est organisé en modules indépendants :
 
@@ -96,7 +96,7 @@ GL02 Linkers est organisé en modules indépendants :
 
 ---
 
-## 📦 Prérequis
+##  Prérequis
 
 ### Logiciels requis
 
@@ -118,7 +118,7 @@ npm --version
 
 ---
 
-## 🚀 Installation
+##  Installation
 
 ### Étape 1 : Cloner le repository
 
@@ -155,7 +155,7 @@ Après cette étape, vous pourrez utiliser `gl02-linkers` directement.
 
 ---
 
-## 💻 Lancement de la CLI
+##  Lancement de la CLI
 
 ### Méthode 1 : Depuis le répertoire du projet
 
@@ -201,9 +201,9 @@ gl02-linkers questions search "mathématiques" --type MCQ
 
 ---
 
-## 📚 Commandes
+##  Commandes
 
-### 🔍 Questions (SPEC_1)
+###  Questions (SPEC_1)
 
 #### `questions search` - Rechercher une question
 
@@ -268,7 +268,7 @@ gl02-linkers questions show Q015 --format compact
 
 ---
 
-### 📝 Exam (SPEC_2, SPEC_4, SPEC_5, SPEC_6)
+###  Exam (SPEC_2, SPEC_4, SPEC_5, SPEC_6)
 
 #### `exam build` - Créer un examen en format GIFT
 
@@ -321,9 +321,9 @@ gl02-linkers exam check <file> [options]
 - `--verbose` : Affichage détaillé des vérifications
 
 **Vérifications effectuées :**
-- ✅ Absence de doublons
-- ✅ Nombre de questions entre 15 et 20
-- ✅ Format GIFT valide
+-  Absence de doublons
+-  Nombre de questions entre 15 et 20
+-  Format GIFT valide
 
 **Exemples :**
 ```bash
@@ -331,7 +331,7 @@ gl02-linkers exam check examen_final.gift
 gl02-linkers exam check test.gift --verbose
 ```
 
-**État actuel :** ⏳ En attente du module examens d'Othmane
+**État actuel :**  En attente du module examens d'Othmane
 
 ---
 
@@ -358,7 +358,7 @@ gl02-linkers exam simulate test.gift --output mes_reponses.json
 gl02-linkers exam simulate examen.gift --time-limit 60
 ```
 
-**État actuel :** ⏳ En attente du module examens d'Othmane
+**État actuel :**  En attente du module examens d'Othmane
 
 ---
 
@@ -392,11 +392,11 @@ gl02-linkers exam bilan results.json --format json --output bilan.json
 gl02-linkers exam bilan test_results.json --exam test.gift --format html
 ```
 
-**État actuel :** ⏳ En attente du module examens d'Othmane
+**État actuel :**  En attente du module examens d'Othmane
 
 ---
 
-### 📊 Profile (SPEC_7, SPEC_8, SPEC_9)
+###  Profile (SPEC_7, SPEC_8, SPEC_9)
 
 #### `profile show` - Générer un profil d'examen
 
@@ -424,7 +424,7 @@ gl02-linkers profile show examen_final.gift
 gl02-linkers profile show test.gift --format json
 ```
 
-**État actuel :** ⏳ En attente du module profil d'Enzo
+**État actuel :**  En attente du module profil d'Enzo
 
 ---
 
@@ -459,7 +459,7 @@ gl02-linkers profile histogram test.gift --width 30
 gl02-linkers profile histogram examen.gift --sort type
 ```
 
-**État actuel :** ⏳ En attente du module profil d'Enzo
+**État actuel :**  En attente du module profil d'Enzo
 
 ---
 
@@ -492,11 +492,11 @@ gl02-linkers profile compare test1.gift test2.gift --detailed
 gl02-linkers profile compare examen_A.gift examen_B.gift --format json
 ```
 
-**État actuel :** ⏳ En attente du module profil d'Enzo
+**État actuel :**  En attente du module profil d'Enzo
 
 ---
 
-### 🧑‍🏫 Teacher (SPEC_3)
+###  Teacher (SPEC_3)
 
 #### `teacher vcard` - Générer une VCard enseignant
 
@@ -533,11 +533,11 @@ gl02-linkers teacher vcard \
   --output marie_martin.vcf
 ```
 
-**État actuel :** ✅ **Complètement implémenté et fonctionnel**
+**État actuel :**  **Complètement implémenté et fonctionnel**
 
 ---
 
-## 💡 Exemples d'utilisation
+##  Exemples d'utilisation
 
 ### Scénario 1 : Enseignant créant un examen
 
@@ -596,7 +596,7 @@ gl02-linkers teacher vcard \
 
 ---
 
-## 📁 Structure du projet
+##  Structure du projet
 
 ```
 GL02_Linkers/
@@ -634,7 +634,7 @@ GL02_Linkers/
 
 ---
 
-## 📄 Format VCard (SPEC_3)
+##  Format VCard (SPEC_3)
 
 ### Qu'est-ce qu'une VCard ?
 
@@ -682,11 +682,11 @@ Le module VCard gère automatiquement l'échappement des caractères spéciaux :
 ### Compatibilité
 
 Les VCard générées sont compatibles avec :
-- ✅ Outlook (Windows)
-- ✅ Google Contacts
-- ✅ Apple Contacts (macOS/iOS)
-- ✅ Thunderbird
-- ✅ Toute application supportant VCard 3.0
+-  Outlook (Windows)
+-  Google Contacts
+-  Apple Contacts (macOS/iOS)
+-  Thunderbird
+-  Toute application supportant VCard 3.0
 
 ### Validation
 
@@ -694,7 +694,7 @@ Les fichiers `.vcf` générés peuvent être validés avec des outils en ligne e
 
 ---
 
-## 🔗 Intégration future
+##  Intégration future
 
 ### Architecture modulaire
 
@@ -714,7 +714,7 @@ GL02 Linkers est conçu de manière modulaire pour permettre l'intégration prog
 - `searchQuestion(keyword, type)` : Recherche des questions
 - `getQuestionById(id)` : Récupère une question par ID
 
-**État :** ⏳ En développement par Alexis
+**État :**  En développement par Alexis
 
 ---
 
@@ -734,7 +734,7 @@ GL02 Linkers est conçu de manière modulaire pour permettre l'intégration prog
 - `simulateExam(examFile, options)` : Simule un examen
 - `generateBilan(resultsFile, examFile, options)` : Génère un bilan
 
-**État :** ⏳ En développement par Othmane
+**État :**  En développement par Othmane
 
 ---
 
@@ -752,7 +752,7 @@ GL02 Linkers est conçu de manière modulaire pour permettre l'intégration prog
 - `generateHistogram(examFile, options)` : Génère un histogramme
 - `compareExams(examFile1, examFile2, options)` : Compare deux examens
 
-**État :** ⏳ En développement par Enzo
+**État :**  En développement par Enzo
 
 ---
 
@@ -768,11 +768,11 @@ GL02 Linkers est conçu de manière modulaire pour permettre l'intégration prog
 - `escapeVCardText(text)` : Échappe les caractères spéciaux
 - `validateVCardData(data)` : Valide les données
 
-**État :** ✅ **Complètement implémenté et fonctionnel**
+**État :**  **Complètement implémenté et fonctionnel**
 
 ---
 
-## 🔄 Bonnes pratiques Git
+##  Bonnes pratiques Git
 
 ### Structure des branches
 
@@ -830,11 +830,11 @@ git push origin cli/mouad
 
 ### Règles importantes
 
-- ❌ **Ne jamais** commiter directement sur `main` ou `develop`
-- ❌ **Ne jamais** pousser directement dans `main` ou `develop`
-- ✅ **Toujours** travailler sur votre branche personnelle
-- ✅ **Toujours** passer par une Pull Request pour intégrer dans `develop`
-- ✅ **Toujours** synchroniser avec `develop` avant de créer une PR
+-  **Ne jamais** commiter directement sur `main` ou `develop`
+-  **Ne jamais** pousser directement dans `main` ou `develop`
+-  **Toujours** travailler sur votre branche personnelle
+-  **Toujours** passer par une Pull Request pour intégrer dans `develop`
+-  **Toujours** synchroniser avec `develop` avant de créer une PR
 
 ### Messages de commit
 
@@ -851,17 +851,17 @@ Exemples :
 
 ---
 
-## ⚠️ Limitations actuelles
+##  Limitations actuelles
 
 ### État actuel du projet
 
 | Fonctionnalité | Statut | Détails |
 |----------------|--------|---------|
-| **CLI complète** | ✅ | Toutes les commandes enregistrées et fonctionnelles |
-| **VCard (SPEC_3)** | ✅ | Complètement implémentée et testée |
-| **Questions (SPEC_1)** | ⏳ | Stubs prêts, en attente du parser d'Alexis |
-| **Examens (SPEC_2, 4, 5, 6)** | ⏳ | Stubs prêts, en attente du module d'Othmane |
-| **Profil (SPEC_7, 8, 9)** | ⏳ | Stubs prêts, en attente du module d'Enzo |
+| **CLI complète** |  Toutes les commandes enregistrées et fonctionnelles |
+| **VCard (SPEC_3)** | Complètement implémentée et testée |
+| **Questions (SPEC_1)** | Stubs prêts, en attente du parser d'Alexis |
+| **Examens (SPEC_2, 4, 5, 6)** | Stubs prêts, en attente du module d'Othmane |
+| **Profil (SPEC_7, 8, 9)** | Stubs prêts, en attente du module d'Enzo |
 
 ### Fonctionnalités en attente
 
@@ -880,7 +880,7 @@ Une fois que les autres membres de l'équipe auront terminé leurs modules, l'in
 
 ---
 
-## 👥 Contributeurs
+##  Contributeurs
 
 - **Mouad** : CLI, VCard (SPEC_3), Documentation, Intégration
 - **Alexis** : Parser GIFT, Gestion des questions
@@ -889,20 +889,20 @@ Une fois que les autres membres de l'équipe auront terminé leurs modules, l'in
 
 ---
 
-## 📄 Licence
+##  Licence
 
 ISC
 
 ---
 
-## 🐛 Signaler un problème
+##  Signaler un problème
 
 Si vous rencontrez un problème, veuillez ouvrir une issue sur le dépôt GitHub :
 https://github.com/alexiszott/GL02_Linkers/issues
 
 ---
 
-## 📚 Ressources
+##  Ressources
 
 - [Documentation GIFT (Moodle)](https://docs.moodle.org/400/en/GIFT_format)
 - [RFC 6350 - vCard Format Specification](https://tools.ietf.org/html/rfc6350)
