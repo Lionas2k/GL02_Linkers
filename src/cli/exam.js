@@ -34,7 +34,7 @@ function loadGIFTQuestions(filePath) {
 /**
  * Filtre les questions selon une liste d'IDs
  * @param {Array} questions - Liste de questions
- * @param {string} idsString - Liste d'IDs séparés par virgules (ex: "1,2,4,5")
+ * @param {string} idsString - Liste d'IDs séparés par virgules (ex: "1,2,4,5" ou "Q1,Q2,Q4,Q5")
  * @returns {Array} - Questions filtrées
  */
 function filterQuestionsByIds(questions, idsString) {
@@ -43,10 +43,19 @@ function filterQuestionsByIds(questions, idsString) {
   const notFound = [];
   
   ids.forEach(id => {
-    const question = questions.find(q => {
-      const qId = String(q.id || '').trim();
-      return qId === id || qId.toLowerCase() === id.toLowerCase();
+    let question = questions.find(q => {
+      const qId = String(q.id || (q.getId ? q.getId() : '')).trim();
+      return qId.toLowerCase() === id.toLowerCase();
     });
+    
+    // Si pas trouvé et que l'ID est un nombre pur, essayer avec "Q" + id
+    if (!question && /^\d+$/.test(id)) {
+      const idWithQ = 'Q' + id;
+      question = questions.find(q => {
+        const qId = String(q.id || (q.getId ? q.getId() : '')).trim();
+        return qId.toLowerCase() === idWithQ.toLowerCase();
+      });
+    }
     
     if (question) {
       filtered.push(question);
@@ -116,7 +125,11 @@ function formatBilan(bilan) {
     output += `\nDétails par question:\n`;
     bilan.details.forEach((detail, index) => {
       const status = detail.correct ? '✓' : '✗';
-      output += `  ${status} Question ${index + 1}: ${detail.text || ''}\n`;
+      const questionText = detail.questionText || detail.text || `Question ${detail.questionId || index + 1}`;
+      output += `  ${status} ${questionText}\n`;
+      if (detail.userAnswer !== undefined) {
+        output += `      Réponse: ${detail.userAnswer}\n`;
+      }
     });
   }
   
@@ -156,10 +169,10 @@ function registerExamCommands(program) {
           throw new Error('Aucune question trouvée avec les IDs spécifiés');
         }
         
-        // Créer l'examen avec ExamService
-        const examService = new ExamService();
-        const outputFile = `exam_${Date.now()}.gift`;
-        examService.buildExam(selectedQuestions, outputFile);
+        // Créer l'examen avec ExamService (singleton)
+        // Le fichier généré sera "generatedExam.gift" dans le dossier courant
+        const outputFile = 'generatedExam.gift';
+        ExamService.buildExam(selectedQuestions, outputFile);
         
         console.log(`✅ Examen créé avec succès: ${outputFile}`);
         console.log(`   Nombre de questions: ${selectedQuestions.length}`);
@@ -175,8 +188,36 @@ function registerExamCommands(program) {
     .argument('<file>', 'Fichier examen GIFT à vérifier')
     .action(({ args }) => {
       try {
-        const examService = new ExamService();
-        const checkResults = examService.checkExam(args.file);
+        // Charger l'examen
+        const questions = loadGIFTQuestions(args.file);
+        
+        // Créer une collection pour vérifier
+        const collection = new CollectionQuestion();
+        questions.forEach(q => collection.addQuestion(q));
+        
+        // Vérifier la validité
+        const isValid = collection.isValidExam();
+        const questionCount = collection.size();
+        
+        // Détecter les doublons
+        const ids = questions.map(q => q.id || (q.getId ? q.getId() : ''));
+        const uniqueIds = new Set(ids);
+        const duplicates = ids.length !== uniqueIds.size;
+        
+        const checkResults = {
+          isValid: isValid && !duplicates,
+          questionCount: questionCount,
+          duplicates: duplicates ? ['Des doublons détectés'] : [],
+          errors: []
+        };
+        
+        if (!isValid) {
+          if (questionCount < 15) {
+            checkResults.errors.push(`Trop peu de questions: ${questionCount} (minimum 15)`);
+          } else if (questionCount > 20) {
+            checkResults.errors.push(`Trop de questions: ${questionCount} (maximum 20)`);
+          }
+        }
         
         console.log(formatCheckResults(checkResults));
         
@@ -200,9 +241,8 @@ function registerExamCommands(program) {
           throw new Error('L\'examen est vide');
         }
         
-        // Simuler l'examen avec ExamService
-        const examService = new ExamService();
-        await examService.simulateExam(questions);
+        // Simuler l'examen avec ExamService (singleton)
+        await ExamService.simulateExam(questions);
         
         console.log(`\n✅ Simulation terminée`);
       } catch (error) {
@@ -227,12 +267,18 @@ function registerExamCommands(program) {
           throw new Error(`Fichier de réponses introuvable: ${args.answersFile}`);
         }
         
+        // Charger l'examen
+        const questions = loadGIFTQuestions(args.examFile);
+        
         // Charger les réponses JSON
         const answersData = JSON.parse(fs.readFileSync(args.answersFile, 'utf8'));
         
-        // Générer le bilan avec ExamService
-        const examService = new ExamService();
-        const bilan = examService.analyzeExam(args.examFile, answersData);
+        // Convertir les réponses en format attendu (array de {questionId, userAnswer})
+        const responses = Array.isArray(answersData) ? answersData : 
+          (answersData.responses || answersData.answers || []);
+        
+        // Générer le bilan avec ExamService (singleton)
+        const bilan = ExamService.analyzeExam(questions, responses);
         
         // Afficher le bilan
         console.log(formatBilan(bilan));
