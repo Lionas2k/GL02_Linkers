@@ -1,3 +1,12 @@
 node_modules/
 .DS_Store
 npm-debug.log
+
+# Fichiers de planification et documentation de travail
+*_PLAN*.md
+*_CHECKLIST*.md
+PROCHAIN_COMMITS.md
+
+# Scripts PowerShell de développement
+cleanup.ps1
+git_verification.ps1
