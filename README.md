@@ -154,7 +154,7 @@ node src/cli/index.js questions search data/testQuestions.gift --keyword "capita
 
 **Construire un examen**
 ```
-node src/cli/index.js exam build data/testQuestions.gift --ids "Q1,Q2,...,Q15"
+node src/cli/index.js exam build data/testQuestions.gift --ids "Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8,Q9,Q10,Q11,Q12,Q13,Q14,Q15"
 ```
 
 **Vérifier la qualité**
