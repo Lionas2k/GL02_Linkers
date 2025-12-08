@@ -6,6 +6,7 @@
  */
 
 const fs = require('fs');
+const readline = require('readline');
 const GIFTParser = require('../parser/GIFTParser');
 const CollectionQuestion = require('../model/CollectionQuestion');
 const ExamService = require('../services/examService');
@@ -241,8 +242,43 @@ function registerExamCommands(program) {
           throw new Error('L\'examen est vide');
         }
         
-        // Simuler l'examen avec ExamService (singleton)
-        await ExamService.simulateExam(questions);
+        // Simuler l'examen avec affichage amélioré pour les questions MATCH
+        const responses = [];
+        const rl = readline.createInterface({
+          input: process.stdin,
+          output: process.stdout
+        });
+
+        const ask = (text) => {
+          return new Promise(resolve => {
+            rl.question(text, answer => {
+              resolve(answer.trim());
+            });
+          });
+        };
+
+        for (const q of questions) {
+          console.log("\n==============================");
+          console.log("Question :");
+          console.log(q.enonce || (q.getTexte ? q.getTexte() : ''));
+          
+          // Affichage spécial pour les questions MATCH
+          if (q.type === "MATCH" && q.reponses && q.reponses.length > 0) {
+            console.log("\nPaires à associer :");
+            const matchPairs = q.reponses.filter(rep => rep.assoc);
+            matchPairs.forEach((rep, index) => {
+              console.log(`  ${rep.resp} -> ${rep.assoc}`);
+            });
+          }
+          
+          const answer = await ask("\nVotre réponse : ");
+          responses.push({
+            questionId: q.id || (q.getId ? q.getId() : ''),
+            userAnswer: answer
+          });
+        }
+
+        rl.close();
         
         console.log(`\n✅ Simulation terminée`);
       } catch (error) {
