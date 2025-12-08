@@ -36,9 +36,9 @@ function loadGIFTQuestions(filePath) {
  * @returns {string} - Profil formaté
  */
 function formatProfile(profile) {
-  let output = `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-  output += `📊 PROFIL DE L'EXAMEN\n`;
-  output += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  let output = `\n========================================\n`;
+  output += `PROFIL DE L'EXAMEN\n`;
+  output += `========================================\n\n`;
   
   if (profile.total !== undefined) {
     output += `Total de questions: ${profile.total}\n\n`;
@@ -46,7 +46,6 @@ function formatProfile(profile) {
   
   output += `Répartition par type:\n`;
   
-  // Afficher les types de questions depuis counts
   if (profile.counts) {
     Object.keys(profile.counts).forEach(type => {
       const count = profile.counts[type];
@@ -57,7 +56,7 @@ function formatProfile(profile) {
     });
   }
   
-  output += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  output += `\n========================================\n`;
   return output;
 }
 
@@ -67,9 +66,9 @@ function formatProfile(profile) {
  * @returns {string} - Comparaison formatée
  */
 function formatComparison(comparison) {
-  let output = `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-  output += `🔍 COMPARAISON D'EXAMENS\n`;
-  output += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  let output = `\n========================================\n`;
+  output += `COMPARAISON D'EXAMENS\n`;
+  output += `========================================\n\n`;
   
   if (comparison.similarity !== undefined) {
     output += `Score de similarité: ${comparison.similarity}%\n\n`;
@@ -86,7 +85,7 @@ function formatComparison(comparison) {
     });
   }
   
-  output += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  output += `\n========================================\n`;
   return output;
 }
 
@@ -104,16 +103,11 @@ function registerProfileCommands(program) {
     .argument('<file>', 'Fichier examen ou GIFT à analyser')
     .action(({ args }) => {
       try {
-        // Charger et parser le fichier GIFT
         const questions = loadGIFTQuestions(args.file);
-        
-        // Générer le profil
         const profile = buildProfile(questions);
-        
-        // Afficher le profil formaté
         console.log(formatProfile(profile));
       } catch (error) {
-        console.error(`❌ Erreur: ${error.message}`);
+        console.error(`Erreur: ${error.message}`);
         process.exit(1);
       }
     });
@@ -124,16 +118,11 @@ function registerProfileCommands(program) {
     .argument('<file>', 'Fichier examen ou GIFT à analyser')
     .action(({ args }) => {
       try {
-        // Charger et parser le fichier GIFT
         const questions = loadGIFTQuestions(args.file);
-        
-        // Générer le profil
         const profile = buildProfile(questions);
-        
-        // Afficher l'histogramme (printHistogram affiche déjà dans la console)
         printHistogram(profile, { width: 30, barChar: '█' });
       } catch (error) {
-        console.error(`❌ Erreur: ${error.message}`);
+        console.error(`Erreur: ${error.message}`);
         process.exit(1);
       }
     });
@@ -145,21 +134,14 @@ function registerProfileCommands(program) {
     .argument('<fileB>', 'Deuxième fichier examen ou GIFT')
     .action(({ args }) => {
       try {
-        // Charger et parser les deux fichiers GIFT
         const questionsA = loadGIFTQuestions(args.fileA);
         const questionsB = loadGIFTQuestions(args.fileB);
-        
-        // Générer les profils
         const profileA = buildProfile(questionsA);
         const profileB = buildProfile(questionsB);
-        
-        // Comparer les profils
         const comparison = compareProfiles(profileA, profileB);
-        
-        // Afficher la comparaison formatée
         console.log(formatComparison(comparison));
       } catch (error) {
-        console.error(`❌ Erreur: ${error.message}`);
+        console.error(`Erreur: ${error.message}`);
         process.exit(1);
       }
     });

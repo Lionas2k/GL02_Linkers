@@ -62,12 +62,10 @@ function escapeVCardText(text) {
  * @throws {Error} Si les données sont invalides
  */
 function validateVCardData(data) {
-  // Vérifier que data existe
   if (!data || typeof data !== 'object') {
     throw new Error('Les données doivent être un objet');
   }
   
-  // Vérifier les champs obligatoires
   const requiredFields = ['nom', 'prenom', 'email', 'etablissement', 'matiere'];
   const missingFields = [];
   
@@ -81,13 +79,11 @@ function validateVCardData(data) {
     throw new Error(`Champs obligatoires manquants: ${missingFields.join(', ')}`);
   }
   
-  // Valider le format de l'email (regex simple)
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(data.email)) {
     throw new Error(`Format d'email invalide: ${data.email}`);
   }
   
-  // Vérifier que les valeurs ne sont pas trop longues (recommandation RFC)
   const maxLength = 255;
   for (const field of requiredFields) {
     if (String(data[field]).length > maxLength) {
@@ -109,36 +105,16 @@ function validateVCardData(data) {
 function buildVCardContent(data) {
   const lines = [];
   
-  // BEGIN:VCARD (obligatoire)
   lines.push('BEGIN:VCARD');
-  
-  // VERSION:3.0 (obligatoire)
   lines.push('VERSION:3.0');
   
-  // FN (Full Name - obligatoire)
-  // Format: Prénom Nom
   const fullName = `${data.prenom} ${data.nom}`;
   lines.push(`FN:${escapeVCardText(fullName)}`);
-  
-  // N (Name - nom structuré)
-  // Format: N:Family;Given;Additional;Prefix;Suffix
-  // Ici: N:Nom;Prénom;;;
   lines.push(`N:${escapeVCardText(data.nom)};${escapeVCardText(data.prenom)};;;`);
-  
-  // EMAIL (obligatoire pour SPEC_3)
-  // Format: EMAIL;TYPE=INTERNET:email
   lines.push(`EMAIL;TYPE=INTERNET:${escapeVCardText(data.email)}`);
-  
-  // ORG (Organization - établissement)
-  // Format: ORG:nom
   lines.push(`ORG:${escapeVCardText(data.etablissement)}`);
-  
-  // CATEGORIES (matière enseignée)
-  // Format: CATEGORIES:matière
   lines.push(`CATEGORIES:${escapeVCardText(data.matiere)}`);
   
-  // REV (Revision - date de création)
-  // Format: REV:YYYYMMDDTHHMMSSZ (ISO 8601)
   const now = new Date();
   const year = now.getUTCFullYear();
   const month = String(now.getUTCMonth() + 1).padStart(2, '0');
@@ -149,10 +125,7 @@ function buildVCardContent(data) {
   const revDate = `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
   lines.push(`REV:${revDate}`);
   
-  // END:VCARD (obligatoire)
   lines.push('END:VCARD');
-  
-  // Joindre toutes les lignes avec CRLF (\r\n)
   return lines.join('\r\n') + '\r\n';
 }
 
@@ -168,18 +141,11 @@ function buildVCardContent(data) {
  * @throws {Error} Si la génération échoue
  */
 function generateVCard(data, outputFile) {
-    // Valider les données
     validateVCardData(data);
-    
-    // Normaliser le chemin de sortie
     const normalizedOutputFile = path.resolve(outputFile);
-    
-    // Construire le contenu VCard
     const vcardContent = buildVCardContent(data);
     
-    // Écrire le fichier
     try {
-      // Créer le répertoire parent si nécessaire
       const outputDir = path.dirname(normalizedOutputFile);
       if (outputDir && outputDir !== '.' && outputDir !== path.dirname('.')) {
         if (!fs.existsSync(outputDir)) {
@@ -187,7 +153,6 @@ function generateVCard(data, outputFile) {
         }
       }
       
-      // Écrire le fichier en UTF-8 avec CRLF
       fs.writeFileSync(normalizedOutputFile, vcardContent, { encoding: 'utf8' });
     } catch (error) {
       throw new Error(`Impossible d'écrire le fichier ${normalizedOutputFile}: ${error.message}`);
@@ -200,4 +165,3 @@ module.exports = {
   validateVCardData,
   buildVCardContent
 };
-

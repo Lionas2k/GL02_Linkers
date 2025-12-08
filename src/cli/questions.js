@@ -57,7 +57,7 @@ function formatQuestionList(question) {
  * @returns {string} - Question formatée
  */
 function formatQuestionDetailed(question) {
-  let output = `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  let output = `\n========================================\n`;
   output += `ID: ${question.id || 'N/A'}\n`;
   output += `Type: ${question.type || 'UNKNOWN'}\n`;
   output += `\nQuestion:\n${question.enonce || (question.getTexte ? question.getTexte() : 'N/A')}\n`;
@@ -65,13 +65,13 @@ function formatQuestionDetailed(question) {
   if (question.reponses && question.reponses.length > 0) {
     output += `\nRéponses:\n`;
     question.reponses.forEach((answer, index) => {
-      const marker = answer.isCorrect ? '✓' : ' ';
+      const marker = answer.isCorrect ? '[OK]' : '   ';
       const answerText = answer.resp || answer || '';
       output += `  ${marker} ${index + 1}. ${answerText}\n`;
     });
   }
   
-  output += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  output += `========================================\n`;
   return output;
 }
 
@@ -185,7 +185,7 @@ function registerQuestionsCommands(program) {
           console.log(formatQuestionList(question));
         });
       } catch (error) {
-        console.error(`❌ Erreur: ${error.message}`);
+        console.error(`Erreur: ${error.message}`);
         process.exit(1);
       }
     });
@@ -204,13 +204,13 @@ function registerQuestionsCommands(program) {
         const question = getQuestionById(collection, options.id);
         
         if (!question) {
-          console.error(`❌ Question introuvable: ${options.id}`);
+          console.error(`Question introuvable: ${options.id}`);
           process.exit(1);
         }
         
         console.log(formatQuestionDetailed(question));
       } catch (error) {
-        console.error(`❌ Erreur: ${error.message}`);
+        console.error(`Erreur: ${error.message}`);
         process.exit(1);
       }
     });
@@ -238,7 +238,7 @@ function registerQuestionsCommands(program) {
           console.log(`${index + 1}. ${formatQuestionPreview(question)}`);
         });
       } catch (error) {
-        console.error(`❌ Erreur: ${error.message}`);
+        console.error(`Erreur: ${error.message}`);
         process.exit(1);
       }
     });

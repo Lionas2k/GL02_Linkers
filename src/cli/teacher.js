@@ -1,8 +1,6 @@
 /**
  * Module de commandes pour la gestion des enseignants
  * SPEC_3 - Génération de VCard enseignant
- * 
- * Module VCard complètement implémenté et fonctionnel
  */
 
 const { generateVCard } = require('../services/vcardService');
@@ -12,11 +10,10 @@ const { generateVCard } = require('../services/vcardService');
  * @param {Object} program - Instance Caporal program
  */
 function registerTeacherCommands(program) {
-  // Groupe principal "teacher"
   program
     .command('teacher', 'Gérer les enseignants');
 
-  // Validators personnalisés pour rejeter les valeurs vides avec messages spécifiques
+  // Validators pour rejeter les valeurs vides
   const createNonEmptyValidator = (fieldName) => {
     return (value) => {
       if (!value || typeof value !== 'string' || value.trim() === '') {
@@ -55,7 +52,6 @@ function registerTeacherCommands(program) {
     })
     .action(({ options }) => {
         try {
-          // Préparer les données (les validators garantissent que les valeurs ne sont pas vides)
           const vcardData = {
             nom: String(options.nom).trim(),
             prenom: String(options.prenom).trim(),
@@ -65,14 +61,10 @@ function registerTeacherCommands(program) {
           };
       
           const outputFile = options.output;
-      
-          // Générer la VCard
           generateVCard(vcardData, outputFile);
-      
-          // Message de succès
-          console.log(`✅ VCard générée avec succès: ${outputFile}`);
+          console.log(`VCard générée avec succès: ${outputFile}`);
         } catch (error) {
-          console.error(`❌ Erreur lors de la génération de la VCard: ${error.message}`);
+          console.error(`Erreur lors de la génération de la VCard: ${error.message}`);
           process.exit(1);
         }
       });

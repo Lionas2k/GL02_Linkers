@@ -80,10 +80,10 @@ function filterQuestionsByIds(questions, idsString) {
  */
 function formatCheckResults(checkResults) {
   if (checkResults.isValid) {
-    return `✅ Examen valide\n   Nombre de questions: ${checkResults.questionCount || 0}`;
+    return `Examen valide\n   Nombre de questions: ${checkResults.questionCount || 0}`;
   }
   
-  let output = `❌ Examen invalide\n`;
+  let output = `Examen invalide\n`;
   output += `   Nombre de questions: ${checkResults.questionCount || 0}\n`;
   
   if (checkResults.errors && checkResults.errors.length > 0) {
@@ -106,9 +106,9 @@ function formatCheckResults(checkResults) {
  * @returns {string} - Bilan formaté
  */
 function formatBilan(bilan) {
-  let output = `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-  output += `📊 BILAN DE L'EXAMEN\n`;
-  output += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  let output = `\n========================================\n`;
+  output += `BILAN DE L'EXAMEN\n`;
+  output += `========================================\n\n`;
   
   if (bilan.score !== undefined && bilan.total !== undefined) {
     const percentage = ((bilan.score / bilan.total) * 100).toFixed(2);
@@ -126,7 +126,7 @@ function formatBilan(bilan) {
   if (bilan.details && Array.isArray(bilan.details)) {
     output += `\nDétails par question:\n`;
     bilan.details.forEach((detail, index) => {
-      const status = detail.correct ? '✓' : '✗';
+      const status = detail.correct ? '[OK]' : '[ERREUR]';
       const questionText = detail.questionText || detail.text || `Question ${detail.questionId || index + 1}`;
       output += `  ${status} ${questionText}\n`;
       if (detail.userAnswer !== undefined) {
@@ -135,7 +135,7 @@ function formatBilan(bilan) {
     });
   }
   
-  output += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  output += `\n========================================\n`;
   return output;
 }
 
@@ -157,29 +157,25 @@ function registerExamCommands(program) {
     })
     .action(({ args, options }) => {
       try {
-        // Charger la banque GIFT
         const questions = loadGIFTQuestions(args.file);
         
         if (questions.length === 0) {
           throw new Error('La banque de questions est vide');
         }
         
-        // Filtrer les questions selon les IDs
         const selectedQuestions = filterQuestionsByIds(questions, options.ids);
         
         if (selectedQuestions.length === 0) {
           throw new Error('Aucune question trouvée avec les IDs spécifiés');
         }
         
-        // Créer l'examen avec ExamService (singleton)
-        // Le fichier généré sera "generatedExam.gift" dans le dossier courant
         const outputFile = 'generatedExam.gift';
         ExamService.buildExam(selectedQuestions, outputFile);
         
-        console.log(`✅ Examen créé avec succès: ${outputFile}`);
+        console.log(`Examen créé avec succès: ${outputFile}`);
         console.log(`   Nombre de questions: ${selectedQuestions.length}`);
       } catch (error) {
-        console.error(`❌ Erreur: ${error.message}`);
+        console.error(`Erreur: ${error.message}`);
         process.exit(1);
       }
     });
@@ -190,18 +186,12 @@ function registerExamCommands(program) {
     .argument('<file>', 'Fichier examen GIFT à vérifier')
     .action(({ args }) => {
       try {
-        // Charger l'examen
         const questions = loadGIFTQuestions(args.file);
-        
-        // Créer une collection pour vérifier
         const collection = new CollectionQuestion();
         questions.forEach(q => collection.addQuestion(q));
         
-        // Vérifier la validité
         const isValid = collection.isValidExam();
         const questionCount = collection.size();
-        
-        // Détecter les doublons
         const ids = questions.map(q => q.id || (q.getId ? q.getId() : ''));
         const uniqueIds = new Set(ids);
         const duplicates = ids.length !== uniqueIds.size;
@@ -225,7 +215,7 @@ function registerExamCommands(program) {
         
         process.exit(checkResults.isValid ? 0 : 1);
       } catch (error) {
-        console.error(`❌ Erreur: ${error.message}`);
+        console.error(`Erreur: ${error.message}`);
         process.exit(1);
       }
     });
@@ -236,14 +226,12 @@ function registerExamCommands(program) {
     .argument('<file>', 'Fichier examen GIFT à simuler')
     .action(async ({ args }) => {
       try {
-        // Charger l'examen
         const questions = loadGIFTQuestions(args.file);
         
         if (questions.length === 0) {
           throw new Error('L\'examen est vide');
         }
         
-        // Simuler l'examen avec affichage amélioré pour les questions MATCH
         const responses = [];
         const rl = readline.createInterface({
           input: process.stdin,
@@ -263,7 +251,6 @@ function registerExamCommands(program) {
           console.log("Question :");
           console.log(q.enonce || (q.getTexte ? q.getTexte() : ''));
           
-          // Affichage spécial pour les questions MATCH
           if (q.type === "MATCH" && q.reponses && q.reponses.length > 0) {
             console.log("\nPaires à associer :");
             const matchPairs = q.reponses.filter(rep => rep.assoc);
@@ -281,20 +268,17 @@ function registerExamCommands(program) {
 
         rl.close();
         
-        // Générer automatiquement le nom du fichier de réponses
         const examPath = path.parse(args.file);
         const responsesFileName = `${examPath.name}_responses.json`;
         const responsesFilePath = path.join(examPath.dir || '.', responsesFileName);
-        
-        // Sauvegarder les réponses en JSON
         fs.writeFileSync(responsesFilePath, JSON.stringify(responses, null, 2), 'utf8');
         
-        console.log(`\n✅ Simulation terminée`);
-        console.log(`📄 Réponses sauvegardées dans: ${responsesFilePath}`);
-        console.log(`💡 Utilisez cette commande pour générer le bilan:`);
+        console.log(`\nSimulation terminée`);
+        console.log(`Réponses sauvegardées dans: ${responsesFilePath}`);
+        console.log(`Utilisez cette commande pour générer le bilan:`);
         console.log(`   node src/cli/index.js exam bilan ${args.file} ${responsesFilePath}`);
       } catch (error) {
-        console.error(`❌ Erreur: ${error.message}`);
+        console.error(`Erreur: ${error.message}`);
         process.exit(1);
       }
     });
@@ -306,7 +290,6 @@ function registerExamCommands(program) {
     .argument('<answers-file>', 'Fichier JSON des réponses')
     .action(({ args }) => {
       try {
-        // Vérifier que les fichiers existent
         if (!fs.existsSync(args.examFile)) {
           throw new Error(`Fichier examen introuvable: ${args.examFile}`);
         }
@@ -315,23 +298,15 @@ function registerExamCommands(program) {
           throw new Error(`Fichier de réponses introuvable: ${args.answersFile}`);
         }
         
-        // Charger l'examen
         const questions = loadGIFTQuestions(args.examFile);
-        
-        // Charger les réponses JSON
         const answersData = JSON.parse(fs.readFileSync(args.answersFile, 'utf8'));
-        
-        // Convertir les réponses en format attendu (array de {questionId, userAnswer})
         const responses = Array.isArray(answersData) ? answersData : 
           (answersData.responses || answersData.answers || []);
         
-        // Générer le bilan avec ExamService (singleton)
         const bilan = ExamService.analyzeExam(questions, responses);
-        
-        // Afficher le bilan
         console.log(formatBilan(bilan));
       } catch (error) {
-        console.error(`❌ Erreur: ${error.message}`);
+        console.error(`Erreur: ${error.message}`);
         process.exit(1);
       }
     });
