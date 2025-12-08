@@ -26,4 +26,4 @@ profileCommands(program);
 teacherCommands(program);
 
 // Lancer le programme
-program.run(process.argv);
+program.run();
