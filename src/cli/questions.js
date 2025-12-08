@@ -45,10 +45,10 @@ function loadGIFTFile(filePath) {
 function formatQuestionList(question) {
   const id = question.id || 'N/A';
   const type = question.type || 'UNKNOWN';
-  const text = question.text || question.questionText || '';
+  const text = question.enonce || question.getTexte ? question.getTexte() : '';
   const shortText = text.length > 60 ? text.substring(0, 60) + '...' : text;
   
-  return `${id.padEnd(10)} ${type.padEnd(10)} ${shortText}`;
+  return `${String(id).padEnd(10)} ${String(type).padEnd(10)} ${shortText}`;
 }
 
 /**
@@ -60,14 +60,13 @@ function formatQuestionDetailed(question) {
   let output = `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
   output += `ID: ${question.id || 'N/A'}\n`;
   output += `Type: ${question.type || 'UNKNOWN'}\n`;
-  output += `Points: ${question.points || 1}\n`;
-  output += `\nQuestion:\n${question.text || question.questionText || 'N/A'}\n`;
+  output += `\nQuestion:\n${question.enonce || (question.getTexte ? question.getTexte() : 'N/A')}\n`;
   
-  if (question.answers && question.answers.length > 0) {
+  if (question.reponses && question.reponses.length > 0) {
     output += `\nRéponses:\n`;
-    question.answers.forEach((answer, index) => {
-      const marker = answer.correct ? '✓' : ' ';
-      const answerText = answer.text || answer || '';
+    question.reponses.forEach((answer, index) => {
+      const marker = answer.isCorrect ? '✓' : ' ';
+      const answerText = answer.resp || answer || '';
       output += `  ${marker} ${index + 1}. ${answerText}\n`;
     });
   }
@@ -83,7 +82,7 @@ function formatQuestionDetailed(question) {
  */
 function formatQuestionPreview(question) {
   const id = question.id || 'N/A';
-  const text = question.text || question.questionText || '';
+  const text = question.enonce || (question.getTexte ? question.getTexte() : '');
   const preview = text.length > 80 ? text.substring(0, 80) + '...' : text;
   
   return `[${id}] ${preview}`;
@@ -105,15 +104,15 @@ function searchQuestions(collection, keyword) {
   
   return allQuestions.filter(question => {
     // Recherche dans le texte de la question
-    const questionText = (question.text || question.questionText || '').toLowerCase();
+    const questionText = (question.enonce || (question.getTexte ? question.getTexte() : '')).toLowerCase();
     if (questionText.includes(keywordLower)) {
       return true;
     }
     
     // Recherche dans les réponses
-    if (question.answers && Array.isArray(question.answers)) {
-      for (const answer of question.answers) {
-        const answerText = (answer.text || answer || '').toLowerCase();
+    if (question.reponses && Array.isArray(question.reponses)) {
+      for (const answer of question.reponses) {
+        const answerText = (answer.resp || answer || '').toLowerCase();
         if (answerText.includes(keywordLower)) {
           return true;
         }
@@ -127,7 +126,7 @@ function searchQuestions(collection, keyword) {
 /**
  * Récupère une question par son ID
  * @param {CollectionQuestion} collection - Collection de questions
- * @param {string} id - ID de la question
+ * @param {string} id - ID de la question (peut être "1" ou "Q1")
  * @returns {Object|null} - Question trouvée ou null
  */
 function getQuestionById(collection, id) {
@@ -136,9 +135,24 @@ function getQuestionById(collection, id) {
   }
   
   const allQuestions = collection.getAll();
-  return allQuestions.find(q => {
-    return q.id && q.id.toLowerCase() === id.toLowerCase();
-  }) || null;
+  const idStr = String(id).trim();
+  
+  // Essayer d'abord avec l'ID tel quel (ex: "Q1")
+  let question = allQuestions.find(q => {
+    const qId = String(q.id || (q.getId ? q.getId() : ''));
+    return qId.toLowerCase() === idStr.toLowerCase();
+  });
+  
+  // Si pas trouvé et que l'ID est un nombre ou commence par un nombre, essayer avec "Q" + id
+  if (!question && /^\d+$/.test(idStr)) {
+    const idWithQ = 'Q' + idStr;
+    question = allQuestions.find(q => {
+      const qId = String(q.id || (q.getId ? q.getId() : ''));
+      return qId.toLowerCase() === idWithQ.toLowerCase();
+    });
+  }
+  
+  return question || null;
 }
 
 /**
