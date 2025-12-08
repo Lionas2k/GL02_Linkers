@@ -1,12 +1,16 @@
 {
   "name": "gl02_linkers",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Outil de gestion des examens en ligne de commande pour le ministère de l'Éducation de Sealand",
+  "main": "src/cli/index.js",
+  "bin": {
+    "gl02-linkers": "./src/cli/index.js"
+  },
   "directories": {
     "test": "tests"
   },
   "scripts": {
+    "start": "node src/cli/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
