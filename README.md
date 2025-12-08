@@ -192,7 +192,7 @@ node src/cli/index.js profile histogram data/testQuestions.gift
 ```
 
 **Comparer deux examens**
-```
+
 Créer deux examens et les comparer
 
 Pour permettre la comparaison entre deux examens, il est nécessaire de créer deux fichiers GIFT valides contenant chacun 15 à 20 questions, conformément aux spécifications.
@@ -231,7 +231,7 @@ Le score de similarité
 Les différences par type de question (MC, TF, MATCH, ESSAY…)
 
 Un résumé statistique clair et lisible 
-```
+
 
 ---
 
