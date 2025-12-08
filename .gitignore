@@ -15,9 +15,18 @@ tests/temp/
 /out.gift
 /generatedExam.gift
 
+# Fichiers générés par la CLI (teacher vcard)
+*.vcf
+
 # Documentation interne de travail (ne jamais commiter)
 *_PLAN*.md
 *_CHECKLIST*.md
+CHECKLIST_PR.md
+PLAN_COMMITS.md
+PLAN_INTEGRATION_COMMITS.md
+PLAN_INTEGRATION_REELLE.md
+PLAN_NETTOYAGE_ET_VALIDATION.md
+PLAN_NETTOYAGE_FICHIERS.md
 PROCHAIN_COMMITS.md
 
 # Scripts PowerShell internes
