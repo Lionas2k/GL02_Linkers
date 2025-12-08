@@ -6,6 +6,7 @@
  */
 
 const fs = require('fs');
+const path = require('path');
 const readline = require('readline');
 const GIFTParser = require('../parser/GIFTParser');
 const CollectionQuestion = require('../model/CollectionQuestion');
@@ -280,7 +281,18 @@ function registerExamCommands(program) {
 
         rl.close();
         
+        // Générer automatiquement le nom du fichier de réponses
+        const examPath = path.parse(args.file);
+        const responsesFileName = `${examPath.name}_responses.json`;
+        const responsesFilePath = path.join(examPath.dir || '.', responsesFileName);
+        
+        // Sauvegarder les réponses en JSON
+        fs.writeFileSync(responsesFilePath, JSON.stringify(responses, null, 2), 'utf8');
+        
         console.log(`\n✅ Simulation terminée`);
+        console.log(`📄 Réponses sauvegardées dans: ${responsesFilePath}`);
+        console.log(`💡 Utilisez cette commande pour générer le bilan:`);
+        console.log(`   node src/cli/index.js exam bilan ${args.file} ${responsesFilePath}`);
       } catch (error) {
         console.error(`❌ Erreur: ${error.message}`);
         process.exit(1);
