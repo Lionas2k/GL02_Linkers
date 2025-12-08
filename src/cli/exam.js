@@ -73,8 +73,39 @@ const ExamService = require('../services/examService');
  * @returns {string} - Résultats formatés
  */
 function formatCheckResults(checkResults, verbose = false) {
-  // TODO: Implémenter le formatage des résultats
-  return '';
+  let output = '\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  output += `Statut: ${checkResults.isValid ? '✅ VALIDE' : '❌ INVALIDE'}\n`;
+  output += `Nombre de questions: ${checkResults.questionCount || 0}\n`;
+  
+  if (checkResults.duplicates && checkResults.duplicates.length > 0) {
+    output += `⚠️  Doublons détectés: ${checkResults.duplicates.length}\n`;
+  }
+  
+  if (verbose) {
+    if (checkResults.errors && checkResults.errors.length > 0) {
+      output += `\nErreurs:\n`;
+      checkResults.errors.forEach(error => {
+        output += `  ❌ ${error}\n`;
+      });
+    }
+    
+    if (checkResults.warnings && checkResults.warnings.length > 0) {
+      output += `\nAvertissements:\n`;
+      checkResults.warnings.forEach(warning => {
+        output += `  ⚠️  ${warning}\n`;
+      });
+    }
+    
+    if (checkResults.duplicates && checkResults.duplicates.length > 0) {
+      output += `\nDoublons:\n`;
+      checkResults.duplicates.forEach(dup => {
+        output += `  🔄 ${dup}\n`;
+      });
+    }
+  }
+  
+  output += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  return output;
 }
 
 /**
@@ -84,8 +115,49 @@ function formatCheckResults(checkResults, verbose = false) {
  * @returns {string} - Bilan formaté
  */
 function formatBilan(bilan, format = 'text') {
-  // TODO: Implémenter le formatage selon le format
-  return '';
+  if (format === 'json') {
+    return JSON.stringify(bilan, null, 2);
+  }
+  
+  if (format === 'html') {
+    // Format HTML basique
+    let html = '<!DOCTYPE html><html><head><title>Bilan Examen</title></head><body>';
+    html += `<h1>Bilan de l'examen</h1>`;
+    html += `<p><strong>Score:</strong> ${bilan.score}/${bilan.total} (${bilan.percentage}%)</p>`;
+    if (bilan.errors && bilan.errors.length > 0) {
+      html += `<h2>Erreurs</h2><ul>`;
+      bilan.errors.forEach(error => {
+        html += `<li>${error}</li>`;
+      });
+      html += `</ul>`;
+    }
+    html += '</body></html>';
+    return html;
+  }
+  
+  // Format text
+  let output = '\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  output += `📊 BILAN DE L'EXAMEN\n`;
+  output += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  output += `Score: ${bilan.score}/${bilan.total} (${bilan.percentage}%)\n\n`;
+  
+  if (bilan.errors && bilan.errors.length > 0) {
+    output += `❌ Erreurs (${bilan.errors.length}):\n`;
+    bilan.errors.forEach((error, index) => {
+      output += `  ${index + 1}. ${error}\n`;
+    });
+    output += '\n';
+  }
+  
+  if (bilan.corrections && bilan.corrections.length > 0) {
+    output += `📝 Corrections:\n`;
+    bilan.corrections.forEach((correction, index) => {
+      output += `  ${index + 1}. ${correction}\n`;
+    });
+  }
+  
+  output += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  return output;
 }
 
 /**
@@ -111,13 +183,29 @@ function handleError(error, context) {
  * @returns {CollectionQuestion} - Collection de questions parsées
  */
 function loadGIFTFile(filePath) {
-  // TODO: Implémenter le chargement et parsing
-  // 1. Lire le fichier avec fs.readFileSync()
-  // 2. Créer une instance GIFTParser
-  // 3. Parser le contenu
-  // 4. Créer une CollectionQuestion et ajouter les questions
-  // 5. Retourner la collection
-  return null;
+  try {
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`Fichier introuvable: ${filePath}`);
+    }
+    
+    const data = fs.readFileSync(filePath, 'utf8');
+    const parser = new GIFTParser(false, false);
+    parser.parse(data);
+    
+    const collection = new CollectionQuestion();
+    if (parser.parsedQuestions && Array.isArray(parser.parsedQuestions)) {
+      parser.parsedQuestions.forEach(question => {
+        collection.addQuestion(question);
+      });
+    }
+    
+    return collection;
+  } catch (error) {
+    if (error.message.includes('introuvable')) {
+      throw error;
+    }
+    throw new Error(`Erreur lors du parsing du fichier GIFT: ${error.message}`);
+  }
 }
 
 /**
@@ -129,10 +217,42 @@ function loadGIFTFile(filePath) {
  * @returns {Array} - Liste de questions sélectionnées
  */
 function selectQuestions(collection, questionIds, random, count) {
-  // TODO: Implémenter la sélection
-  // Si questionIds : sélectionner par IDs
-  // Si random : sélection aléatoire de count questions
-  return [];
+  const allQuestions = collection.getAll();
+  
+  if (questionIds) {
+    // Sélection par IDs
+    const ids = questionIds.split(',').map(id => id.trim());
+    const selected = [];
+    const notFound = [];
+    
+    ids.forEach(id => {
+      const question = allQuestions.find(q => q.id && q.id.toLowerCase() === id.toLowerCase());
+      if (question) {
+        selected.push(question);
+      } else {
+        notFound.push(id);
+      }
+    });
+    
+    if (notFound.length > 0) {
+      throw new Error(`Questions introuvables: ${notFound.join(', ')}`);
+    }
+    
+    return selected;
+  }
+  
+  if (random) {
+    // Sélection aléatoire
+    const numQuestions = count || Math.min(20, allQuestions.length);
+    if (numQuestions > allQuestions.length) {
+      throw new Error(`Pas assez de questions disponibles (${allQuestions.length} disponibles, ${numQuestions} demandées)`);
+    }
+    
+    const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, numQuestions);
+  }
+  
+  return allQuestions;
 }
 
 /**
@@ -165,26 +285,31 @@ function registerExamCommands(program) {
       validator: program.NUMBER
     })
     .action(({ args, options }) => {
-      console.log('📝 Commande: exam build');
-      console.log(`   Fichier de sortie: ${args.output}`);
-      if (options.questions) {
-        console.log(`   Questions: ${options.questions}`);
-      }
-      if (options.file) {
-        console.log(`   Fichier source: ${options.file}`);
-      }
-      if (options.title) {
-        console.log(`   Titre: ${options.title}`);
-      }
-      if (options.random) {
-        console.log(`   Mode aléatoire: activé`);
-        if (options.count) {
-          console.log(`   Nombre de questions: ${options.count}`);
+      try {
+        // Charger le fichier source
+        const collection = loadGIFTFile(options.file);
+        
+        // Sélectionner les questions
+        if (!options.questions && !options.random) {
+          throw new Error('Spécifiez --questions ou --random');
         }
+        
+        const selectedQuestions = selectQuestions(
+          collection,
+          options.questions,
+          options.random,
+          options.count
+        );
+        
+        // Créer l'examen
+        const examService = new ExamService();
+        examService.buildExam(selectedQuestions, args.output, { title: options.title });
+        
+        console.log(`✅ Examen créé avec succès: ${args.output}`);
+        console.log(`   Nombre de questions: ${selectedQuestions.length}`);
+      } catch (error) {
+        handleError(error, 'exam build');
       }
-      console.log('\n⚠️  En attente du module examens d\'Othmane');
-      console.log('   Cette commande appellera: buildExam()');
-      console.log('   Une fois le module examens prêt, cette fonctionnalité sera opérationnelle.');
     });
 
   // Commande: exam check
@@ -195,18 +320,16 @@ function registerExamCommands(program) {
       flag: true
     })
     .action(({ args, options }) => {
-      console.log('✅ Commande: exam check');
-      console.log(`   Fichier: ${args.file}`);
-      if (options.verbose) {
-        console.log(`   Mode verbose: activé`);
+      try {
+        const examService = new ExamService();
+        const checkResults = examService.checkExam(args.file);
+        
+        console.log(formatCheckResults(checkResults, options.verbose));
+        
+        process.exit(checkResults.isValid ? 0 : 1);
+      } catch (error) {
+        handleError(error, 'exam check');
       }
-      console.log('\n⚠️  En attente du module examens d\'Othmane');
-      console.log('   Cette commande appellera: checkExam()');
-      console.log('   Vérifications à effectuer:');
-      console.log('   - Absence de doublons');
-      console.log('   - Nombre de questions entre 15 et 20');
-      console.log('   - Format GIFT valide');
-      console.log('   Une fois le module examens prêt, cette fonctionnalité sera opérationnelle.');
     });
 
   // Commande: exam simulate
@@ -219,19 +342,34 @@ function registerExamCommands(program) {
     .option('--time-limit <minutes>', 'Limite de temps en minutes', {
       validator: program.NUMBER
     })
-    .action(({ args, options }) => {
-      console.log('🎮 Commande: exam simulate');
-      console.log(`   Fichier examen: ${args.file}`);
-      if (options.output) {
-        console.log(`   Fichier de sortie: ${options.output}`);
+    .action(async ({ args, options }) => {
+      try {
+        // Charger l'examen
+        const collection = loadGIFTFile(args.file);
+        const questions = collection.getAll();
+        
+        // Simuler l'examen
+        const examService = new ExamService();
+        const answers = await examService.simulateExam(questions, { timeLimit: options.timeLimit });
+        
+        // Sauvegarder les résultats
+        const outputFile = options.output || `exam_results_${Date.now()}.json`;
+        const results = {
+          examFile: args.file,
+          timestamp: new Date().toISOString(),
+          answers: answers,
+          totalScore: answers.reduce((sum, a) => sum + (a.points || 0), 0),
+          totalPossible: answers.reduce((sum, a) => sum + (a.maxPoints || 1), 0)
+        };
+        results.percentage = ((results.totalScore / results.totalPossible) * 100).toFixed(2);
+        
+        fs.writeFileSync(outputFile, JSON.stringify(results, null, 2));
+        
+        console.log(`✅ Simulation terminée. Score: ${results.totalScore}/${results.totalPossible} (${results.percentage}%)`);
+        console.log(`   Réponses sauvegardées: ${outputFile}`);
+      } catch (error) {
+        handleError(error, 'exam simulate');
       }
-      if (options.timeLimit) {
-        console.log(`   Limite de temps: ${options.timeLimit} minutes`);
-      }
-      console.log('\n⚠️  En attente du module examens d\'Othmane');
-      console.log('   Cette commande appellera: simulateExam()');
-      console.log('   Mode interactif: l\'utilisateur répondra aux questions une par une');
-      console.log('   Une fois le module examens prêt, cette fonctionnalité sera opérationnelle.');
     });
 
   // Commande: exam bilan
@@ -249,19 +387,30 @@ function registerExamCommands(program) {
       validator: program.STRING
     })
     .action(({ args, options }) => {
-      console.log('📊 Commande: exam bilan');
-      console.log(`   Fichier résultats: ${args.resultsFile}`);
-      if (options.exam) {
-        console.log(`   Fichier examen: ${options.exam}`);
+      try {
+        // Charger le fichier de résultats
+        if (!fs.existsSync(args.resultsFile)) {
+          throw new Error(`Fichier de résultats introuvable: ${args.resultsFile}`);
+        }
+        
+        const resultsData = JSON.parse(fs.readFileSync(args.resultsFile, 'utf8'));
+        
+        // Générer le bilan
+        const examService = new ExamService();
+        const bilan = examService.generateBilan(args.resultsFile, options.exam, { format: options.format });
+        
+        // Formater et afficher/sauvegarder
+        const formatted = formatBilan(bilan, options.format);
+        
+        if (options.output) {
+          fs.writeFileSync(options.output, formatted);
+          console.log(`✅ Bilan sauvegardé: ${options.output}`);
+        } else {
+          console.log(formatted);
+        }
+      } catch (error) {
+        handleError(error, 'exam bilan');
       }
-      console.log(`   Format: ${options.format}`);
-      if (options.output) {
-        console.log(`   Fichier de sortie: ${options.output}`);
-      }
-      console.log('\n⚠️  En attente du module examens d\'Othmane');
-      console.log('   Cette commande appellera: generateBilan()');
-      console.log('   Affichera: score, % de réussite, erreurs, corrections');
-      console.log('   Une fois le module examens prêt, cette fonctionnalité sera opérationnelle.');
     });
 }
 
