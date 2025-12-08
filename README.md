@@ -154,7 +154,7 @@ node src/cli/index.js questions search data/testQuestions.gift --keyword "capita
 
 **Construire un examen**
 ```
-node src/cli/index.js exam build data/testQuestions.gift --ids "Q1,Q2,...,Q15"
+node src/cli/index.js exam build data/testQuestions.gift --ids "Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8,Q9,Q10,Q11,Q12,Q13,Q14,Q15"
 ```
 
 **Vérifier la qualité**
@@ -193,7 +193,43 @@ node src/cli/index.js profile histogram data/testQuestions.gift
 
 **Comparer deux examens**
 ```
+Créer deux examens et les comparer
+
+Pour permettre la comparaison entre deux examens, il est nécessaire de créer deux fichiers GIFT valides contenant chacun 15 à 20 questions, conformément aux spécifications.
+
+
+ Créer un premier examen (Exam A)
+node src/cli/index.js exam build data/testQuestions.gift --ids "Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8,Q9,Q10,Q11,Q12,Q13,Q14,Q15"
+
+
+Renommer le fichier généré :
+
+ren generatedExam.gift examA.gift
+
+
+ Créer un second examen (Exam B)
+
+Il doit lui aussi contenir 15 questions uniques pour être valide :
+
+node src/cli/index.js exam build data/testQuestions.gift --ids "Q6,Q7,Q8,Q9,Q10,Q11,Q12,Q13,Q14,Q15,Q16,Q17,Q18,Q19,Q20"
+
+
+Renommer le fichier :
+
+ren generatedExam.gift examB.gift
+
+
+ Comparer les deux examens
 node src/cli/index.js profile compare examA.gift examB.gift
+
+
+Cette commande affiche :
+
+Le score de similarité
+
+Les différences par type de question (MC, TF, MATCH, ESSAY…)
+
+Un résumé statistique clair et lisible 
 ```
 
 ---
@@ -201,12 +237,7 @@ node src/cli/index.js profile compare examA.gift examB.gift
 ### ✔ E. VCard (SPEC_3)
 
 ```
-node src/cli/index.js teacher vcard \
-  --nom Dupont \
-  --prenom Jean \
-  --email jean@utt.fr \
-  --etablissement UTT \
-  --matiere GL02
+node src/cli/index.js teacher vcard --nom "Dupont" --prenom "Alice" --email "alice@utt.fr" --etablissement "UTT" --matiere "Informatique"
 ```
 
 ---
