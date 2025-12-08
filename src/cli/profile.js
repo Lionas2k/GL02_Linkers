@@ -6,11 +6,33 @@
  */
 
 const fs = require('fs');
-const ProfileService = require('../services/profileService');
+const GIFTParser = require('../parser/GIFTParser');
+const { buildProfile, printHistogram, compareProfiles } = require('../services/profileService');
+
+/**
+ * Charge et parse un fichier GIFT
+ * @param {string} filePath - Chemin du fichier GIFT
+ * @returns {Array} - Liste de questions parsées
+ */
+function loadGIFTQuestions(filePath) {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Fichier introuvable: ${filePath}`);
+  }
+  
+  try {
+    const data = fs.readFileSync(filePath, 'utf8');
+    const parser = new GIFTParser(false, false);
+    parser.parse(data);
+    
+    return parser.parsedQuestions || [];
+  } catch (error) {
+    throw new Error(`Erreur lors du parsing du fichier GIFT: ${error.message}`);
+  }
+}
 
 /**
  * Formate les résultats du profil pour l'affichage
- * @param {Object} profile - Profil retourné par getProfile()
+ * @param {Object} profile - Profil retourné par buildProfile()
  * @returns {string} - Profil formaté
  */
 function formatProfile(profile) {
@@ -24,30 +46,16 @@ function formatProfile(profile) {
   
   output += `Répartition par type:\n`;
   
-  // Afficher les types de questions (MCQ, TF, MATCH, etc.)
-  if (profile.MCQ !== undefined) {
-    output += `  MCQ:    ${profile.MCQ}\n`;
+  // Afficher les types de questions depuis counts
+  if (profile.counts) {
+    Object.keys(profile.counts).forEach(type => {
+      const count = profile.counts[type];
+      const percent = profile.percents ? profile.percents[type] : 0;
+      if (count > 0) {
+        output += `  ${type.padEnd(12)} ${count} (${percent.toFixed(2)}%)\n`;
+      }
+    });
   }
-  if (profile.TF !== undefined) {
-    output += `  TF:     ${profile.TF}\n`;
-  }
-  if (profile.MATCH !== undefined) {
-    output += `  MATCH:  ${profile.MATCH}\n`;
-  }
-  if (profile.NUMERIC !== undefined) {
-    output += `  NUMERIC: ${profile.NUMERIC}\n`;
-  }
-  if (profile.SHORTANSWER !== undefined) {
-    output += `  SHORTANSWER: ${profile.SHORTANSWER}\n`;
-  }
-  
-  // Afficher les autres types s'il y en a
-  const knownTypes = ['MCQ', 'TF', 'MATCH', 'NUMERIC', 'SHORTANSWER'];
-  Object.keys(profile).forEach(key => {
-    if (!knownTypes.includes(key) && key !== 'total' && typeof profile[key] === 'number') {
-      output += `  ${key}: ${profile[key]}\n`;
-    }
-  });
   
   output += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
   return output;
@@ -55,7 +63,7 @@ function formatProfile(profile) {
 
 /**
  * Formate les résultats de comparaison
- * @param {Object} comparison - Résultats de compare()
+ * @param {Object} comparison - Résultats de compareProfiles()
  * @returns {string} - Comparaison formatée
  */
 function formatComparison(comparison) {
@@ -67,14 +75,14 @@ function formatComparison(comparison) {
     output += `Score de similarité: ${comparison.similarity}%\n\n`;
   }
   
-  if (comparison.differences) {
+  if (comparison.diffs) {
     output += `Différences par type:\n`;
-    Object.keys(comparison.differences).forEach(type => {
-      const diff = comparison.differences[type];
-      const fileA = diff.fileA !== undefined ? diff.fileA : diff.exam1 || 0;
-      const fileB = diff.fileB !== undefined ? diff.fileB : diff.exam2 || 0;
-      const difference = diff.difference !== undefined ? diff.difference : diff.diff || 0;
-      output += `  ${type.padEnd(12)} Fichier A: ${fileA}, Fichier B: ${fileB}, Différence: ${difference}\n`;
+    Object.keys(comparison.diffs).forEach(type => {
+      const diff = comparison.diffs[type];
+      const fileA = diff.a !== undefined ? diff.a : 0;
+      const fileB = diff.b !== undefined ? diff.b : 0;
+      const diffPercent = diff.diffPercent !== undefined ? diff.diffPercent.toFixed(2) : '0.00';
+      output += `  ${type.padEnd(12)} Fichier A: ${fileA}, Fichier B: ${fileB}, Différence: ${diffPercent}%\n`;
     });
   }
   
@@ -96,11 +104,13 @@ function registerProfileCommands(program) {
     .argument('<file>', 'Fichier examen ou GIFT à analyser')
     .action(({ args }) => {
       try {
-        if (!fs.existsSync(args.file)) {
-          throw new Error(`Fichier introuvable: ${args.file}`);
-        }
+        // Charger et parser le fichier GIFT
+        const questions = loadGIFTQuestions(args.file);
         
-        const profile = ProfileService.getProfile(args.file);
+        // Générer le profil
+        const profile = buildProfile(questions);
+        
+        // Afficher le profil formaté
         console.log(formatProfile(profile));
       } catch (error) {
         console.error(`❌ Erreur: ${error.message}`);
@@ -114,12 +124,14 @@ function registerProfileCommands(program) {
     .argument('<file>', 'Fichier examen ou GIFT à analyser')
     .action(({ args }) => {
       try {
-        if (!fs.existsSync(args.file)) {
-          throw new Error(`Fichier introuvable: ${args.file}`);
-        }
+        // Charger et parser le fichier GIFT
+        const questions = loadGIFTQuestions(args.file);
         
-        const histogram = ProfileService.getHistogram(args.file);
-        console.log(histogram);
+        // Générer le profil
+        const profile = buildProfile(questions);
+        
+        // Afficher l'histogramme (printHistogram affiche déjà dans la console)
+        printHistogram(profile, { width: 30, barChar: '█' });
       } catch (error) {
         console.error(`❌ Erreur: ${error.message}`);
         process.exit(1);
@@ -133,15 +145,18 @@ function registerProfileCommands(program) {
     .argument('<fileB>', 'Deuxième fichier examen ou GIFT')
     .action(({ args }) => {
       try {
-        if (!fs.existsSync(args.fileA)) {
-          throw new Error(`Fichier introuvable: ${args.fileA}`);
-        }
+        // Charger et parser les deux fichiers GIFT
+        const questionsA = loadGIFTQuestions(args.fileA);
+        const questionsB = loadGIFTQuestions(args.fileB);
         
-        if (!fs.existsSync(args.fileB)) {
-          throw new Error(`Fichier introuvable: ${args.fileB}`);
-        }
+        // Générer les profils
+        const profileA = buildProfile(questionsA);
+        const profileB = buildProfile(questionsB);
         
-        const comparison = ProfileService.compare(args.fileA, args.fileB);
+        // Comparer les profils
+        const comparison = compareProfiles(profileA, profileB);
+        
+        // Afficher la comparaison formatée
         console.log(formatComparison(comparison));
       } catch (error) {
         console.error(`❌ Erreur: ${error.message}`);
