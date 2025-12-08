@@ -2,16 +2,138 @@
  * Module de commandes pour la gestion des examens
  * SPEC_2, SPEC_4, SPEC_5, SPEC_6 - Création, vérification, simulation et bilan d'examens
  * 
- * Intégration future avec le module examens d'Othmane
+ * Intégration avec le module examens d'Othmane
  */
 
-// Imports pour la future intégration (commentés jusqu'à ce que les modules soient prêts)
-// const { parseGIFT } = require('../parser/parserGift');
-// const { CollectionQuestion } = require('../parser/CollectionQuestion');
-// const { buildExam } = require('../exam/buildExam');
-// const { checkExam } = require('../exam/checkExam');
-// const { simulateExam } = require('../exam/simulateExam');
-// const { generateBilan } = require('../exam/bilan');
+// Imports pour l'intégration avec les modules externes
+// TODO: Vérifier les exports exacts et adapter les imports si nécessaire
+const fs = require('fs');
+const GIFTParser = require('../parser/GIFTParser');
+const CollectionQuestion = require('../model/CollectionQuestion');
+const ExamService = require('../services/examService');
+
+/**
+ * Documentation des points d'intégration avec ExamService
+ * 
+ * ExamService (classe) :
+ *   - new ExamService() : Crée une instance du service
+ *   - service.buildExam(questions, outputPath) : Construit un examen
+ *     * Paramètres : questions (Array de Question), outputPath (string)
+ *     * Retourne : CollectionQuestion
+ *     * Lance une erreur si l'examen n'est pas valide (15-20 questions)
+ *   - service.simulateExam(questions) : Simule un examen interactif
+ *     * Paramètres : questions (Array de Question)
+ *     * Retourne : Promise<Array> avec les réponses
+ *   - service.checkExam(examFile) : Vérifie la qualité d'un examen
+ *     * Paramètres : examFile (string) - chemin du fichier
+ *     * Retourne : Object avec les résultats des vérifications
+ *   - service.generateBilan(resultsFile, examFile, options) : Génère un bilan
+ *     * Paramètres : resultsFile (string), examFile (string), options (Object)
+ *     * Retourne : Object avec le bilan (score, erreurs, corrections)
+ * 
+ * Dépendances :
+ *   - ExamService dépend du Parser GIFT pour charger les questions/examens
+ *   - Utilise CollectionQuestion pour gérer les collections de questions
+ * 
+ * Workflow exam build :
+ *   1. Charger le fichier source avec GIFTParser
+ *   2. Sélectionner les questions (par IDs ou aléatoirement)
+ *   3. Créer une instance ExamService
+ *   4. Appeler service.buildExam(questions, outputPath)
+ *   5. Gérer les erreurs (examen invalide, questions introuvables)
+ * 
+ * Workflow exam check :
+ *   1. Créer une instance ExamService
+ *   2. Appeler service.checkExam(examFile)
+ *   3. Afficher les résultats (doublons, nombre questions, format)
+ *   4. Mode --verbose : affichage détaillé
+ * 
+ * Workflow exam simulate :
+ *   1. Charger l'examen avec GIFTParser
+ *   2. Créer une instance ExamService
+ *   3. Appeler await service.simulateExam(questions)
+ *   4. Sauvegarder les réponses dans --output (JSON)
+ * 
+ * Workflow exam bilan :
+ *   1. Charger le fichier de résultats (JSON)
+ *   2. Charger l'examen original (si --exam fourni)
+ *   3. Créer une instance ExamService
+ *   4. Appeler service.generateBilan(resultsFile, examFile, options)
+ *   5. Formater selon --format (text/json/html)
+ */
+
+/**
+ * Fonctions helper pour le formatage des résultats
+ */
+
+/**
+ * Formate les résultats de vérification d'examen
+ * @param {Object} checkResults - Résultats de checkExam
+ * @param {boolean} verbose - Mode verbose
+ * @returns {string} - Résultats formatés
+ */
+function formatCheckResults(checkResults, verbose = false) {
+  // TODO: Implémenter le formatage des résultats
+  return '';
+}
+
+/**
+ * Formate un bilan d'examen
+ * @param {Object} bilan - Bilan généré
+ * @param {string} format - Format de sortie (text, json, html)
+ * @returns {string} - Bilan formaté
+ */
+function formatBilan(bilan, format = 'text') {
+  // TODO: Implémenter le formatage selon le format
+  return '';
+}
+
+/**
+ * Fonctions helper pour la gestion d'erreurs
+ */
+
+/**
+ * Gère les erreurs de manière uniforme
+ * @param {Error} error - Erreur à gérer
+ * @param {string} context - Contexte de l'erreur (nom de la commande)
+ */
+function handleError(error, context) {
+  console.error(`❌ Erreur dans ${context}: ${error.message}`);
+  if (error.stack && process.env.DEBUG) {
+    console.error(error.stack);
+  }
+  process.exit(1);
+}
+
+/**
+ * Charge et parse un fichier GIFT
+ * @param {string} filePath - Chemin du fichier GIFT
+ * @returns {CollectionQuestion} - Collection de questions parsées
+ */
+function loadGIFTFile(filePath) {
+  // TODO: Implémenter le chargement et parsing
+  // 1. Lire le fichier avec fs.readFileSync()
+  // 2. Créer une instance GIFTParser
+  // 3. Parser le contenu
+  // 4. Créer une CollectionQuestion et ajouter les questions
+  // 5. Retourner la collection
+  return null;
+}
+
+/**
+ * Sélectionne des questions selon les critères
+ * @param {CollectionQuestion} collection - Collection de questions
+ * @param {string} questionIds - Liste d'IDs séparés par virgules (optionnel)
+ * @param {boolean} random - Sélection aléatoire
+ * @param {number} count - Nombre de questions si random
+ * @returns {Array} - Liste de questions sélectionnées
+ */
+function selectQuestions(collection, questionIds, random, count) {
+  // TODO: Implémenter la sélection
+  // Si questionIds : sélectionner par IDs
+  // Si random : sélection aléatoire de count questions
+  return [];
+}
 
 /**
  * Enregistre les commandes du groupe "exam"
