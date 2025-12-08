@@ -201,12 +201,7 @@ node src/cli/index.js profile compare examA.gift examB.gift
 ### ✔ E. VCard (SPEC_3)
 
 ```
-node src/cli/index.js teacher vcard \
-  --nom Dupont \
-  --prenom Jean \
-  --email jean@utt.fr \
-  --etablissement UTT \
-  --matiere GL02
+node src/cli/index.js teacher vcard --nom "Dupont" --prenom "Alice" --email "alice@utt.fr" --etablissement "UTT" --matiere "Informatique"
 ```
 
 ---
