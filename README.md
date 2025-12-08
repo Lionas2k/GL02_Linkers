@@ -84,15 +84,15 @@ GL02 Linkers est organisé en modules indépendants :
 
 | SPEC | Fonctionnalité | Statut |
 |------|----------------|--------|
-| SPEC_1 | Rechercher et visualiser une question | ⏳ En attente parser |
-| SPEC_2 | Créer un examen en format GIFT | ⏳ En attente module examens |
-| SPEC_3 | Générer une VCard enseignant | ✅ **Implémenté** |
-| SPEC_4 | Simuler la passation d'un examen | ⏳ En attente module examens |
-| SPEC_5 | Générer un bilan du test | ⏳ En attente module examens |
-| SPEC_6 | Vérifier la qualité d'un examen | ⏳ En attente module examens |
-| SPEC_7 | Générer un profil d'examen | ⏳ En attente module profil |
-| SPEC_8 | Visualiser un histogramme | ⏳ En attente module profil |
-| SPEC_9 | Comparer deux examens | ⏳ En attente module profil |
+| SPEC_1 | Rechercher et visualiser une question | En attente parser |
+| SPEC_2 | Créer un examen en format GIFT | En attente module examens |
+| SPEC_3 | Générer une VCard enseignant | **Implémenté** |
+| SPEC_4 | Simuler la passation d'un examen | En attente module examens |
+| SPEC_5 | Générer un bilan du test | En attente module examens |
+| SPEC_6 | Vérifier la qualité d'un examen | En attente module examens |
+| SPEC_7 | Générer un profil d'examen | En attente module profil |
+| SPEC_8 | Visualiser un histogramme | En attente module profil |
+| SPEC_9 | Comparer deux examens | En attente module profil |
 
 ---
 
@@ -237,7 +237,7 @@ gl02-linkers questions search "algèbre" --file mes_questions.gift
 gl02-linkers questions search "test" --format json
 ```
 
-**État actuel :** ⏳ En attente du parser GIFT d'Alexis
+**État actuel :**  En attente du parser GIFT d'Alexis
 
 ---
 
@@ -264,7 +264,7 @@ gl02-linkers questions show Q042 --file examen_final.gift
 gl02-linkers questions show Q015 --format compact
 ```
 
-**État actuel :** ⏳ En attente du parser GIFT d'Alexis
+**État actuel :**  En attente du parser GIFT d'Alexis
 
 ---
 
@@ -301,7 +301,7 @@ gl02-linkers exam build test.gift --file questions.gift --random --count 20
 gl02-linkers exam build examen.gift --title "Examen Final 2024" --questions Q001,Q002
 ```
 
-**État actuel :** ⏳ En attente du module examens d'Othmane
+**État actuel :**  En attente du module examens d'Othmane
 
 ---
 
