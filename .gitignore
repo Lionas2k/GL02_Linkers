@@ -1,3 +1,34 @@
+# Node
 node_modules/
-.DS_Store
 npm-debug.log
+.DS_Store
+
+# Fichiers temporaires de test
+tests/temp/
+
+# Gift files (exclure tous, sauf ceux du dossier data)
+*.gift
+!data/*.gift
+
+# Fichiers générés à la racine (examen simulé, exports, etc.)
+/testExam.gift
+/out.gift
+/generatedExam.gift
+
+# Fichiers générés par la CLI (teacher vcard)
+*.vcf
+
+# Documentation interne de travail (ne jamais commiter)
+*_PLAN*.md
+*_CHECKLIST*.md
+CHECKLIST_PR.md
+PLAN_COMMITS.md
+PLAN_INTEGRATION_COMMITS.md
+PLAN_INTEGRATION_REELLE.md
+PLAN_NETTOYAGE_ET_VALIDATION.md
+PLAN_NETTOYAGE_FICHIERS.md
+PROCHAIN_COMMITS.md
+
+# Scripts PowerShell internes
+cleanup.ps1
+git_verification.ps1
