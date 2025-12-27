@@ -255,8 +255,23 @@ function registerExamCommands(program) {
             console.log("\nPaires à associer :");
             const matchPairs = q.reponses.filter(rep => rep.assoc);
             matchPairs.forEach((rep, index) => {
-              console.log(`  ${rep.resp} -> ${rep.assoc}`);
+              console.log(`  ${rep.resp}`);
             });
+            console.log("\nAvec :");
+            matchPairs.forEach((rep, index) => {
+              console.log(` ${rep.assoc}`);
+            });
+          }
+
+          if(q.type=== 'MC'){
+            console.log("Les réponses possibles sont :");
+            q.reponses.forEach((rep)=>{
+              console.log(`- ${rep.resp}`)
+            });
+          }
+
+          if(q.type === 'TF'){
+            console.log("Répondez par TRUE ou FALSE.");
           }
           
           const answer = await ask("\nVotre réponse : ");
