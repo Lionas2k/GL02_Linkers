@@ -23,6 +23,14 @@ function registerTeacherCommands(program) {
     };
   };
 
+  const normalizeFileName = (str) =>
+    str
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_|_$/g, '');
+
   // Commande: teacher vcard
   program
     .command('teacher vcard', 'Générer une VCard enseignant')
@@ -47,27 +55,29 @@ function registerTeacherCommands(program) {
       validator: createNonEmptyValidator('matiere')
     })
     .option('--output <file>', 'Fichier de sortie (.vcf)', {
-      default: 'teacher.vcf',
       validator: program.STRING
     })
     .action(({ options }) => {
-        try {
-          const vcardData = {
-            nom: String(options.nom).trim(),
-            prenom: String(options.prenom).trim(),
-            email: String(options.email).trim(),
-            etablissement: String(options.etablissement).trim(),
-            matiere: String(options.matiere).trim()
-          };
-      
-          const outputFile = options.output;
-          generateVCard(vcardData, outputFile);
-          console.log(`VCard générée avec succès: ${outputFile}`);
-        } catch (error) {
-          console.error(`Erreur lors de la génération de la VCard: ${error.message}`);
-          process.exit(1);
-        }
-      });
+      try {
+        const vcardData = {
+          nom: String(options.nom).trim(),
+          prenom: String(options.prenom).trim(),
+          email: String(options.email).trim(),
+          etablissement: String(options.etablissement).trim(),
+          matiere: String(options.matiere).trim()
+        };
+
+        const outputFile =
+          options.output ||
+          `${normalizeFileName(vcardData.prenom)}_${normalizeFileName(vcardData.nom)}.vcf`;
+
+        generateVCard(vcardData, outputFile);
+        console.log(`VCard générée avec succès: ${outputFile}`);
+      } catch (error) {
+        console.error(`Erreur lors de la génération de la VCard: ${error.message}`);
+        process.exit(1);
+      }
+    });
 }
 
 module.exports = registerTeacherCommands;
