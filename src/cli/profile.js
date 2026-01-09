@@ -139,7 +139,14 @@ function registerProfileCommands(program) {
         const profileA = buildProfile(questionsA);
         const profileB = buildProfile(questionsB);
         const comparison = compareProfiles(profileA, profileB);
-        console.log(formatComparison(comparison));
+        const formattedResult = formatComparison(comparison);
+        if (options.output === 'file') {
+          const outputPath = path.resolve(options.filename);
+          fs.writeFileSync(outputPath, formattedResult, 'utf8');
+          console.log(`Résultat de la comparaison sauvegardé dans: ${outputPath}`);
+        } else {
+          console.log(formattedResult);
+        }
       } catch (error) {
         console.error(`Erreur: ${error.message}`);
         process.exit(1);
