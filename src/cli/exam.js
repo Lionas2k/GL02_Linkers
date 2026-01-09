@@ -27,6 +27,11 @@ function loadGIFTQuestions(filePath) {
     const parser = new GIFTParser(false, false);
     parser.parse(data);
     
+    // Check if there were parsing errors and no valid questions
+    if (parser.errorCount > 0 && (!parser.parsedQuestions || parser.parsedQuestions.length === 0)) {
+      throw new Error(`Erreur lors du parsing du fichier GIFT: format invalide`);
+    }
+    
     return parser.parsedQuestions || [];
   } catch (error) {
     throw new Error(`Erreur lors du parsing du fichier GIFT: ${error.message}`);
@@ -186,7 +191,26 @@ function registerExamCommands(program) {
     .argument('<file>', 'Fichier examen GIFT à vérifier')
     .action(({ args }) => {
       try {
+        const originalLog = console.log;
+        let hasParsingErrors = false;
+        console.log = function(...args) {
+          if (args[0] && args[0].includes && args[0].includes('Parsing Error !')) {
+            hasParsingErrors = true;
+          }
+          originalLog.apply(console, args);
+        };
+        
         const questions = loadGIFTQuestions(args.file);
+        
+        // Restore console.log
+        console.log = originalLog;
+        
+        // If there were parsing errors, treat as format error regardless of question count
+        if (hasParsingErrors) {
+          console.error('Error on exam file format. Please check your file or generate a new one.');
+          process.exit(1);
+        }
+        
         const collection = new CollectionQuestion();
         questions.forEach(q => collection.addQuestion(q));
         
@@ -215,7 +239,11 @@ function registerExamCommands(program) {
         
         process.exit(checkResults.isValid ? 0 : 1);
       } catch (error) {
-        console.error(`Erreur: ${error.message}`);
+        const isFormatError = /erreur lors du parsing du fichier gift/i.test((error && error.message) || '');
+        const message = isFormatError
+          ? 'Error on exam file format. Please check your file or generate a new one.'
+          : `Erreur: ${error.message}`;
+        console.error(message);
         process.exit(1);
       }
     });
