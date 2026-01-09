@@ -154,6 +154,25 @@ function getQuestionById(collection, id) {
   
   return question || null;
 }
+/**
+ * Recherche des questions par type
+ * @param {CollectionQuestion} collection - Collection de questions
+ * @param {string} type - Type de question recherché
+ * @returns {Array} - Liste de questions trouvées
+ */
+function searchQuestionsByType(collection, type) {
+  if (!collection || collection.size() === 0) {
+    return [];
+  }
+
+  const typeLower = type.toLowerCase();
+
+  return collection.getAll().filter(question => {
+    if (!question.type) return false;
+    return String(question.type).toLowerCase() === typeLower;
+  });
+}
+
 
 /**
  * Enregistre les commandes du groupe "questions"
@@ -242,6 +261,34 @@ function registerQuestionsCommands(program) {
         process.exit(1);
       }
     });
+    // Commande: questions type
+program
+  .command('questions type', 'Rechercher des questions par type')
+  .argument('<file>', 'Fichier GIFT à analyser')
+  .option('--type <type>', 'Type de question à rechercher', {
+    required: true,
+    validator: program.STRING
+  })
+  .action(({ args, options }) => {
+    try {
+      const collection = loadGIFTFile(args.file);
+      const results = searchQuestionsByType(collection, options.type);
+
+      if (results.length === 0) {
+        console.log(`Aucune question trouvée pour le type "${options.type}"`);
+        return;
+      }
+
+      console.log(`\n${results.length} question(s) trouvée(s) pour le type "${options.type}":\n`);
+      results.forEach((question, index) => {
+        console.log(`${index + 1}. ${formatQuestionPreview(question)}`);
+      });
+    } catch (error) {
+      console.error(`Erreur: ${error.message}`);
+      process.exit(1);
+    }
+  });
+
 }
 
 module.exports = registerQuestionsCommands;
