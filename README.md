@@ -204,8 +204,15 @@ node src/cli/index.js exam build data/testQuestions.gift --ids "Q1,Q2,Q3,Q4,Q5,Q
 
 
 - Renommer le fichier généré :
+
+Dans PowerShell :
 ```
 ren generatedExam.gift examA.gift
+```
+Dans un shell Linux classique : 
+
+```
+mv generatedExam.gift examA.gift
 ```
 
 - Créer un second examen (Exam B)
@@ -216,8 +223,15 @@ node src/cli/index.js exam build data/testQuestions.gift --ids "Q6,Q7,Q8,Q9,Q10,
 ```
 
 - Renommer le fichier :
+
+Dans PowerShell :
 ```
 ren generatedExam.gift examB.gift
+```
+Dans un shell Linux classique : 
+
+```
+mv generatedExam.gift examB.gift
 ```
 
 - Comparer les deux examens
