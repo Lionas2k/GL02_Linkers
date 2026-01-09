@@ -19,7 +19,7 @@ const ExamService = require('../services/examService');
  */
 function loadGIFTQuestions(filePath) {
   if (!fs.existsSync(filePath)) {
-    throw new Error(`Fichier introuvable: ${filePath}`);
+    throw new Error('FILE_NOT_FOUND');
   }
   
   try {
@@ -205,7 +205,6 @@ function registerExamCommands(program) {
         // Restore console.log
         console.log = originalLog;
         
-        // If there were parsing errors, treat as format error regardless of question count
         if (hasParsingErrors) {
           console.error('Error on exam file format. Please check your file or generate a new one.');
           process.exit(1);
@@ -239,11 +238,15 @@ function registerExamCommands(program) {
         
         process.exit(checkResults.isValid ? 0 : 1);
       } catch (error) {
-        const isFormatError = /erreur lors du parsing du fichier gift/i.test((error && error.message) || '');
-        const message = isFormatError
-          ? 'Error on exam file format. Please check your file or generate a new one.'
-          : `Erreur: ${error.message}`;
-        console.error(message);
+        if (error.message === 'FILE_NOT_FOUND') {
+          console.error('Exam file not found, please verify the syntax of the file you want to pass an exam on, or create a new exam.');
+        } else {
+          const isFormatError = /erreur lors du parsing du fichier gift/i.test((error && error.message) || '');
+          const message = isFormatError
+            ? 'Error on exam file format. Please check your file or generate a new one.'
+            : `Erreur: ${error.message}`;
+          console.error(message);
+        }
         process.exit(1);
       }
     });
